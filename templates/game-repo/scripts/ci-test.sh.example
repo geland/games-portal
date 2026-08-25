@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Copy this file to scripts/ci-test.sh and replace this example with the
+# project's headless Godot test commands. GODOT_BIN is provided by CI.
+"${GODOT_BIN}" --headless --path . --quit-after 2

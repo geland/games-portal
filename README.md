@@ -41,3 +41,8 @@ portal or edit DNS.
 See [`docs/ci-credentials.md`](docs/ci-credentials.md) for the exact secret and
 Apple signing setup, and [`docs/release-contract.md`](docs/release-contract.md)
 for the immutable artifact layout.
+
+Reusable private Godot repository CI/release files live in
+[`templates/game-repo`](templates/game-repo/README.md). Copy and configure the
+template only after choosing the exact release commit for a game; it never
+absorbs a local dirty working tree automatically.

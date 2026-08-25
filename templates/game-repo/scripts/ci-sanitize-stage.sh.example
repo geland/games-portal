@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Copy to scripts/ci-sanitize-stage.sh for additional release-only cleanup.
+# $1 is a disposable project copy under RUNNER_TEMP and $2 is `web` or `mac`.
+# The source checkout is never passed to this hook and must not be edited.
+readonly STAGED_PROJECT="$1"
+readonly TARGET="$2"
+test -f "${STAGED_PROJECT}/project.godot"
+
+# Put Compatibility-renderer overrides needed only for Web behind this guard;
+# the later Mac build receives a separate, fresh stage from the source checkout.
+if [[ "${TARGET}" == "web" ]]; then
+  : # Apply project-specific Web-only sanitation here.
+fi

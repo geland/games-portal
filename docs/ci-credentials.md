@@ -30,6 +30,14 @@ Repository variables, which are not secrets:
 - `R2_BUCKET=gregeland-games-releases`
 - `R2_PUBLIC_BASE=https://play.games.gregeland.com`
 
+The reusable workflow in [`../templates/game-repo`](../templates/game-repo/README.md)
+checks `GAME_SLUG` against the tracked release config. It immediately derives a
+two-hour R2 session credential constrained to only `HeadObject`, `GetObject`,
+and `PutObject` under the selected game's version and manifest prefixes. This
+limits accidental cross-game writes while keeping the persistent token limited
+to the one release bucket. The persistent parent credential is still highly
+sensitive and is passed only to the final publish step.
+
 ## macOS release jobs
 
 The signing job runs on a GitHub-hosted macOS runner and imports a Developer ID
@@ -55,3 +63,10 @@ submit and wait for notarization, staple the ticket to the `.app`, verify with
 Native iPhone/iPad distribution is a different workflow. TestFlight and App
 Store releases involve provisioning profiles and Apple review; the initial
 phone/tablet path for Gregeland Games is the browser build.
+
+The workflow references a `production` GitHub environment so environment
+secrets and an approval gate can be used when the account plan supports them.
+GitHub's required-reviewer protection is not available for private repositories
+on every plan; exact tags and manually dispatched full commit SHAs remain the
+minimum release gates. Always review workflow changes before approving a release
+because the selected commit's workflow code receives these credentials.

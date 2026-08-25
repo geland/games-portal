@@ -1,0 +1,17 @@
+{
+  "$schema": "./.gregeland-release.schema.json",
+  "slug": "replace-me",
+  "projectPath": ".",
+  "godotVersion": "4.6.2",
+  "web": {
+    "enabled": true,
+    "preset": "Web",
+    "entry": "index.html"
+  },
+  "mac": {
+    "enabled": true,
+    "preset": "macOS",
+    "bundleName": "Replace Me",
+    "entitlements": null
+  }
+}

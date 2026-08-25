@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://games.gregeland.com/schemas/game-release-v1.json",
+  "title": "Gregeland game release",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["slug", "projectPath", "godotVersion", "web", "mac"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "projectPath": { "type": "string", "minLength": 1 },
+    "godotVersion": { "const": "4.6.2" },
+    "web": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["enabled", "preset", "entry"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "preset": { "type": "string", "minLength": 1 },
+        "entry": { "type": "string", "pattern": "^[^/\\\\]+\\.html$" }
+      }
+    },
+    "mac": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["enabled", "preset", "bundleName", "entitlements"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "preset": { "type": "string", "minLength": 1 },
+        "bundleName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9 ._-]*$"
+        },
+        "entitlements": {
+          "oneOf": [
+            { "type": "null" },
+            { "type": "string", "minLength": 1 }
+          ]
+        }
+      }
+    }
+  }
+}
