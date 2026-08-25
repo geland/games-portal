@@ -37,3 +37,7 @@ all pass. Pull requests run the same quality gate without production access.
 Production uses a dedicated, account-scoped Cloudflare Workers token; game
 repositories use separate bucket-scoped R2 credentials and cannot deploy the
 portal or edit DNS.
+
+See [`docs/ci-credentials.md`](docs/ci-credentials.md) for the exact secret and
+Apple signing setup, and [`docs/release-contract.md`](docs/release-contract.md)
+for the immutable artifact layout.
