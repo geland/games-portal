@@ -44,6 +44,15 @@ describe("release gateway", () => {
     );
   });
 
+  it("rejects unsupported methods with hardened response headers", async () => {
+    const response = await SELF.fetch("https://games.gregeland.com/play/astro-bro", {
+      method: "POST"
+    });
+    expect(response.status).toBe(405);
+    expect(response.headers.get("allow")).toBe("GET, HEAD");
+    expect(response.headers.get("x-content-type-options")).toBe("nosniff");
+  });
+
   it("rejects traversal-shaped object keys", () => {
     expect(testable.safeObjectKey("/releases/../secret")).toBeNull();
     expect(testable.safeObjectKey("/releases/%2e%2e/secret")).toBeNull();

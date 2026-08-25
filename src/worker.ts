@@ -37,42 +37,40 @@ async function routeRequest(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
 
   if (request.method !== "GET" && request.method !== "HEAD") {
-    return new Response("Method not allowed", {
-      status: 405,
-      headers: { "Allow": "GET, HEAD" }
-    });
+    const response = textResponse("Method not allowed", 405);
+    response.headers.set("Allow", "GET, HEAD");
+    return response;
   }
 
   const playMatch = /^\/play\/([^/]+)\/?$/.exec(url.pathname);
   if (playMatch) {
-    return redirectToRelease(url, env, playMatch[1] ?? "", "web");
+    return redirectToRelease(env, playMatch[1] ?? "", "web");
   }
 
   const downloadMatch = /^\/download\/([^/]+)\/mac\/?$/.exec(url.pathname);
   if (downloadMatch) {
-    return redirectToRelease(url, env, downloadMatch[1] ?? "", "mac");
+    return redirectToRelease(env, downloadMatch[1] ?? "", "mac");
   }
 
   if (url.pathname === "/tracker" || url.pathname === "/tracker/") {
-    return redirectToRelease(url, env, "web-dodge", "tracker");
+    return redirectToRelease(env, "web-dodge", "tracker");
   }
 
   return env.ASSETS.fetch(request);
 }
 
 async function redirectToRelease(
-  requestUrl: URL,
   env: Env,
   slug: string,
   target: "web" | "tracker" | "mac"
 ): Promise<Response> {
   if (!SLUG_RE.test(slug)) {
-    return new Response("Unknown game", { status: 404 });
+    return textResponse("Unknown game", 404);
   }
 
   const manifest = await readManifest(env, slug);
   if (!manifest || manifest.slug !== slug) {
-    return new Response("Release not found", { status: 404 });
+    return textResponse("Release not found", 404);
   }
 
   let path: string | undefined;
@@ -87,10 +85,10 @@ async function redirectToRelease(
   }
 
   if (!path || !isSafeRelativePath(path)) {
-    return new Response(target === "mac" ? "Mac download is being prepared" : "Web release is being prepared", {
-      status: 404,
-      headers: securityHeaders("text/plain; charset=utf-8")
-    });
+    return textResponse(
+      target === "mac" ? "Mac download is being prepared" : "Web release is being prepared",
+      404
+    );
   }
 
   const publicBase = new URL(env.R2_PUBLIC_BASE);
@@ -135,7 +133,11 @@ function isReleaseManifest(value: unknown): value is ReleaseManifest {
     return typeof download.key === "string"
       && isSafeRelativePath(download.key)
       && download.key.startsWith(`downloads/${candidate.slug}/${candidate.version}/`)
-      && (download.filename === undefined || typeof download.filename === "string");
+      && (download.filename === undefined
+        || (typeof download.filename === "string"
+          && download.filename.length > 0
+          && download.filename.length <= 255
+          && !/[\\/\u0000-\u001f\u007f]/.test(download.filename)));
   };
 
   return validEntry(candidate.web)
@@ -149,6 +151,13 @@ function securityHeaders(contentType: string): Headers {
     "X-Content-Type-Options": "nosniff",
     "Referrer-Policy": "strict-origin-when-cross-origin",
     "Permissions-Policy": "camera=(self), microphone=()"
+  });
+}
+
+function textResponse(message: string, status: number): Response {
+  return new Response(message, {
+    status,
+    headers: securityHeaders("text/plain; charset=utf-8")
   });
 }
 
