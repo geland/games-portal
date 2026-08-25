@@ -1,7 +1,7 @@
 # CI credentials
 
 No production credential belongs in source control. Add these only as encrypted
-GitHub Actions secrets after each private repository exists.
+GitHub Actions secrets in a private repository that is authorized to publish.
 
 ## Catalog repository
 
@@ -15,7 +15,7 @@ the `gregeland-games-releases` R2 binding. Terraform, not the deploy workflow,
 owns both custom domains, so routine catalog deploys do not need DNS or Workers
 Routes write access.
 
-## Game repositories
+## Private game repositories
 
 Give every game repository its own R2 S3 token, limited to Object Read & Write
 on only `gregeland-games-releases`:
@@ -37,6 +37,22 @@ and `PutObject` under the selected game's version and manifest prefixes. This
 limits accidental cross-game writes while keeping the persistent token limited
 to the one release bucket. The persistent parent credential is still highly
 sensitive and is passed only to the final publish step.
+
+## Judah's public repositories
+
+`judaheland-dev/astrobro`, `judaheland-dev/tower-defense`, and
+`judaheland-dev/race-maze` remain public on Judah's account. Their repository
+workflows may import, test, and build source, but receive no Apple certificate,
+notary key, or R2 credential.
+
+Privileged releases for those games will run from the private `geland` games
+release repository after its central workflow is installed. The dispatcher
+must select a configured public repository, an exact 40-character source
+commit, and an immutable semantic version. It checks
+out that source without persisting credentials, combines it with trusted
+release tooling from the private repository, and only then receives the
+production environment secrets. Never execute workflow code or release scripts
+from the public source checkout with those secrets present.
 
 ## macOS release jobs
 
