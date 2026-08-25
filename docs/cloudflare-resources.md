@@ -25,3 +25,17 @@ Default Godot Web builds should be single-threaded for the broadest Safari and
 iOS compatibility. If a game later needs threaded Web exports, reserve a
 separate path and add COOP/COEP only there. Do not apply COEP to the motion
 tracker paths because their MediaPipe dependencies come from CDNs.
+
+## Cost guardrails
+
+- Portal static-asset requests do not invoke the Worker and are free. Only the
+  small stable play/download/tracker routes run Worker code.
+- Keep releases in R2 Standard. Its monthly free tier includes 10 GB-month of
+  storage, 1 million Class A operations, and 10 million Class B operations;
+  direct R2 Internet egress has no transfer charge.
+- Preserve immutable versions, but report total bucket storage after every
+  release. Ask before adding a lifecycle deletion policy or spending alert.
+- Do not proxy game binaries through the Worker. The direct R2 origin avoids
+  Worker request usage and the 25 MiB Workers Static Assets per-file limit.
+- If family usage ever approaches a free-tier limit, measure actual bucket and
+  Worker analytics before changing plans or architecture.
