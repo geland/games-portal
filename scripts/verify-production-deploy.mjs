@@ -39,30 +39,33 @@ const attempts = 12;
 
 for (let attempt = 1; attempt <= attempts; attempt += 1) {
   const cacheBust = `${deploymentId}-${attempt}`;
-  const pageUrl = `https://${hostname}/?deploy=${cacheBust}`;
+  const markerUrl = `https://${hostname}/deploy-id.txt?deploy=${cacheBust}`;
   const brandUrl = `https://${hostname}/brand-mark.svg?deploy=${cacheBust}`;
   const requestHeaders = {
     "Cache-Control": "no-cache",
     Pragma: "no-cache",
   };
 
-  const [pageResponse, brandResponse] = await Promise.all([
-    fetch(pageUrl, { headers: requestHeaders }),
+  const [markerResponse, brandResponse] = await Promise.all([
+    fetch(markerUrl, { headers: requestHeaders }),
     fetch(brandUrl, { headers: requestHeaders }),
   ]);
-  const [pageHtml, brandSvg] = await Promise.all([pageResponse.text(), brandResponse.text()]);
+  const [markerText, brandSvg] = await Promise.all([
+    markerResponse.text(),
+    brandResponse.text(),
+  ]);
 
-  const pageIsCurrent = pageResponse.ok && pageHtml.includes("<title>Geland Games</title>");
+  const deploymentIsCurrent = markerResponse.ok && markerText.trim() === deploymentId;
   const brandIsCurrent = brandResponse.ok && brandSvg.includes("<svg");
 
-  if (pageIsCurrent && brandIsCurrent) {
+  if (deploymentIsCurrent && brandIsCurrent) {
     console.log(`Verified Geland Games is live at https://${hostname}/.`);
     process.exit(0);
   }
 
   console.log(
     `Production verification ${attempt}/${attempts} is not current yet ` +
-      `(page ${pageResponse.status}, brand ${brandResponse.status}).`,
+      `(marker ${markerResponse.status}, brand ${brandResponse.status}).`,
   );
 
   if (attempt < attempts) {

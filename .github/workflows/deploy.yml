@@ -45,6 +45,8 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci --ignore-scripts --no-audit
+      - name: Stamp deployment
+        run: node scripts/write-deployment-marker.mjs
       - name: Upload Worker version
         run: npx wrangler deploy --tag "$GITHUB_SHA"
         env:
