@@ -44,6 +44,7 @@ procedure. Resume never overwrites immutable content.
 - `blend-in`
 - `commanders`
 - `web-dodge`
+- `motion-tracker`
 - `balloon`
 - `labyrinth`
 
@@ -52,8 +53,6 @@ procedure. Resume never overwrites immutable content.
 ```text
 releases/<slug>/<version>/web/index.html
 releases/<slug>/<version>/web/<export files>
-releases/<slug>/<version>/tracker/index.html
-releases/<slug>/<version>/tracker/<tracker files>
 downloads/<slug>/<version>/<slug>-macos-universal.zip
 manifests/<slug>/versions/<version>.json
 manifests/<slug>/index.json
@@ -92,22 +91,15 @@ root.
 }
 ```
 
-Motion Dodge may also include a tracker target:
-
-```json
-{
-  "slug": "web-dodge",
-  "version": "v1.0.0",
-  "web": { "entry": "index.html" },
-  "tracker": { "entry": "index.html" }
-}
-```
+The hosted tracker is published as the independent Web slug
+`motion-tracker`; `/tracker` resolves that slug's ordinary Web target. This
+keeps the stable-manifest schema limited to `web` and `mac`.
 
 ## Publish order
 
 1. Validate a `vMAJOR.MINOR.PATCH` version and build from its exact commit. The
-   central public-source workflow is manual-only; private game repositories may
-   use an exact tag or manual dispatch.
+   central source workflow is manual-only; private game repositories may use an
+   exact tag or manual dispatch only to build an unsigned candidate.
 2. Run automated tests and platform smoke checks.
 3. Sign, notarize, staple, and verify every Mac application.
 4. Upload Web and Mac artifacts to new version keys.

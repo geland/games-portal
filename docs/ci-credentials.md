@@ -1,7 +1,7 @@
 # CI credentials
 
 No production credential belongs in source control. Add these only as encrypted
-GitHub Actions secrets in a private repository that is authorized to publish.
+GitHub Actions environment secrets in the public release-authority repository.
 
 ## Catalog repository
 
@@ -15,28 +15,16 @@ the `gregeland-games-releases` R2 binding. Terraform, not the deploy workflow,
 owns both custom domains, so routine catalog deploys do not need DNS or Workers
 Routes write access.
 
+Store these only in the protected `portal-production` environment.
+
 ## Private game repositories
 
-Give every game repository its own R2 S3 token, limited to Object Read & Write
-on only `gregeland-games-releases`:
-
-- `R2_ACCESS_KEY_ID`
-- `R2_SECRET_ACCESS_KEY`
-- `CLOUDFLARE_ACCOUNT_ID`
-
-Repository variables, which are not secrets:
-
-- `GAME_SLUG`
-- `R2_BUCKET=gregeland-games-releases`
-- `R2_PUBLIC_BASE=https://play.games.gregeland.com`
-
-The reusable workflow in [`../templates/game-repo`](../templates/game-repo/README.md)
-checks `GAME_SLUG` against the tracked release config. It immediately derives a
-two-hour R2 session credential constrained to only `HeadObject`, `GetObject`,
-and `PutObject` under the selected game's version and manifest prefixes. This
-limits accidental cross-game writes while keeping the persistent token limited
-to the one release bucket. The persistent parent credential is still highly
-sensitive and is passed only to the final publish step.
+Private game repositories receive no Apple, Cloudflare, or R2 credential. Their
+workflows validate source and may upload short-lived unsigned release
+candidates using only the default read-only `GITHUB_TOKEN`. A future central
+private-source handoff may use a release-authority credential with only Actions
+artifact read access to the fixed private repositories; it must not grant source
+write or production access.
 
 ## Judah's public repositories
 
@@ -45,10 +33,10 @@ sensitive and is passed only to the final publish step.
 workflows may import, test, and build source, but receive no Apple certificate,
 notary key, or R2 credential.
 
-Privileged releases for those games run from this private repository through
+Privileged releases for enabled games run from this public repository through
 `.github/workflows/release-public-game.yml`. The dispatcher must select one of
-the three fixed repositories, an exact lowercase 40-character source commit,
-and an immutable semantic version.
+the fixed enabled repositories, an exact lowercase 40-character source commit,
+and an immutable semantic version. Tower Defense is held and is not selectable.
 
 The public commit is imported, tested, and exported only in a job with no
 GitHub environment and no Apple or R2 secret. It uploads constrained data
@@ -61,10 +49,10 @@ boundary and allowlist.
 
 The main-ref and workflow-SHA checks in YAML are defense in depth; they do not
 prove GitHub branch or environment protection. Before any central release
-secret is stored, the repository **MUST** protect `main` and the `production`
-environment **MUST** allow deployment from selected branch `main` only, require
-at least one reviewer, and prevent self-review. If the private-repository plan
-cannot enforce every control, do not enable this privileged workflow.
+secret is stored, the repository **MUST** protect `main` and the
+`game-release-production` environment **MUST** allow deployment from
+selected branch `main` only, require at least one reviewer, prevent self-review, and
+disallow bypass.
 
 ## macOS release jobs
 
@@ -92,8 +80,10 @@ Native iPhone/iPad distribution is a different workflow. TestFlight and App
 Store releases involve provisioning profiles and Apple review; the initial
 phone/tablet path for Gregeland Games is the browser build.
 
-The privileged workflows reference the protected `production` environment.
-Always review workflow changes before approving a release because trusted
-portal code in the approved commit receives these credentials. Exact tags,
-full commit SHAs, and in-workflow ref checks supplement—but never replace—the
-required GitHub branch and environment protections.
+The privileged game workflows reference the protected
+`game-release-production` environment. Portal deployment uses the distinct
+`portal-production` environment. Always review workflow changes before
+approving a release because trusted portal code in the approved commit receives
+these credentials. Exact tags, full commit SHAs, and in-workflow ref checks
+supplement—but never replace—the required GitHub branch and environment
+protections.

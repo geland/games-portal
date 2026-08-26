@@ -8,6 +8,8 @@ const portalRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), ".
 const workflow = await readFile(path.join(portalRoot, ".github/workflows/release-public-game.yml"), "utf8");
 const releaseDocs = await readFile(path.join(portalRoot, "release/public-games/README.md"), "utf8");
 const credentialDocs = await readFile(path.join(portalRoot, "docs/ci-credentials.md"), "utf8");
+const privateCandidateWorkflow = await readFile(path.join(portalRoot, "templates/game-repo/.github/workflows/release.yml"), "utf8");
+const portalDeployWorkflow = await readFile(path.join(portalRoot, ".github/workflows/deploy.yml"), "utf8");
 
 function job(name, nextName = null) {
   const start = workflow.indexOf(`  ${name}:\n`);
@@ -22,7 +24,8 @@ test("central public release is manual-only with a fixed choice", () => {
   assert.match(trigger, /workflow_dispatch:/);
   assert.doesNotMatch(trigger, /\bpush:|pull_request:|schedule:/);
   const choices = [...trigger.matchAll(/^          - (.+)$/gm)].map((match) => match[1]);
-  assert.deepEqual(choices, ["astro-bro", "tower-defense", "racing-maze"]);
+  assert.deepEqual(choices, ["astro-bro", "racing-maze"]);
+  assert.doesNotMatch(workflow, /^\s+- tower-defense\s*$/m);
 });
 
 test("every third-party action is pinned to a full commit", () => {
@@ -70,9 +73,24 @@ test("central-only tooling is not embedded in the reusable private-game template
   }
 });
 
+test("private game candidate workflow has no production credential path", () => {
+  assert.match(privateCandidateWorkflow, /name: Build game release candidate/);
+  assert.match(privateCandidateWorkflow, /retention-days: 1/);
+  assert.doesNotMatch(privateCandidateWorkflow, /environment:|\$\{\{\s*secrets\.|R2_ACCESS_KEY|R2_SECRET_ACCESS_KEY|APPLE_DEVELOPER_ID|sign-notarize-macos|publish-release\.mjs/);
+});
+
+test("portal deployment is manual, pinned, and isolated from game release secrets", () => {
+  assert.match(portalDeployWorkflow, /github\.event_name == 'workflow_dispatch'/);
+  assert.match(portalDeployWorkflow, /environment: portal-production/);
+  assert.doesNotMatch(portalDeployWorkflow, /R2_ACCESS_KEY|R2_SECRET_ACCESS_KEY|APPLE_/);
+  const uses = [...portalDeployWorkflow.matchAll(/^\s+-?\s*uses:\s+([^\s#]+)/gm)].map((match) => match[1]);
+  assert.ok(uses.length >= 4);
+  for (const action of uses) assert.match(action, /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+@[0-9a-f]{40}$/);
+});
+
 test("production job never checks out or runs public source", () => {
   const publish = job("sign-and-publish");
-  assert.match(publish, /environment:\n      name: production/);
+  assert.match(publish, /environment:\n      name: game-release-production/);
   assert.match(publish, /test ! -e public-source/);
   assert.doesNotMatch(publish, /repository: \$\{\{ needs\.authorize\.outputs\.source_repository \}\}/);
   assert.equal((publish.match(/uses: actions\/checkout@/g) ?? []).length, 1);

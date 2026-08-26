@@ -32,28 +32,32 @@ downloads/<slug>/<version>/<notarized macOS archive>
 Versioned objects are immutable. Update the manifest only after every object in
 the new release has uploaded and passed its smoke checks.
 
-The `main` branch deploys after type generation, tests, and a Wrangler dry run
-all pass. Pull requests run the same quality gate without production access.
-Production uses a dedicated, account-scoped Cloudflare Workers token; game
-release jobs use bucket-scoped R2 credentials and cannot deploy the portal or
-edit DNS. Private game repositories may run their own privileged release job.
-Judah's public repositories receive no Apple or R2 credentials; their central,
-manual-only release workflow builds an exact approved public commit in an
-unprivileged job, then signs and publishes verified data artifacts from this
-private repository on a fresh production runner.
+Every `main` push and pull request runs type generation, tests, and a Wrangler
+dry run. A portal deployment is a separate manual action from protected `main`.
+Its `portal-production` environment uses a dedicated, account-scoped
+Cloudflare Workers token. Game publication uses the separate
+`game-release-production` environment and bucket-scoped R2 credentials, so a
+game release cannot deploy the portal or edit DNS.
+
+This public repository is the release authority. Game source repositories do
+not receive Apple or R2 credentials. A credential-free job builds an exact
+allowlisted source commit, then a fresh protected runner validates the bounded
+data package and runs only portal-owned signing and publication code.
 
 See [`docs/ci-credentials.md`](docs/ci-credentials.md) for the exact secret and
 Apple signing setup, and [`docs/release-contract.md`](docs/release-contract.md)
 for the immutable artifact layout.
 
-Reusable private Godot repository CI/release files live in
+Reusable private Godot repository validation and unsigned-candidate files live in
 [`templates/game-repo`](templates/game-repo/README.md). Copy and configure the
-template only after choosing the exact release commit for a game; it never
-absorbs a local dirty working tree automatically.
+template only after choosing the exact release commit for a game. Private game
+repositories must not receive production release credentials, and the template
+never absorbs a local dirty working tree automatically.
 
-Do not copy the privileged release workflow or credentials into a public game
-repository. Public-source release configuration and its trust-boundary details
+Do not copy privileged credentials into any game repository. Public-source
+release configuration and its trust-boundary details
 live in [`release/public-games`](release/public-games/README.md); only
 credential-free validation belongs with the public source. Production release
-secrets require protected `main`, a main-only `production` environment,
-required review, and prevention of self-review as documented there.
+secrets require protected `main`, a main-only `game-release-production`
+environment, required review, and prevention of self-review as documented
+there.

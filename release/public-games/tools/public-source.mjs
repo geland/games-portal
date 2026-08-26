@@ -4,7 +4,6 @@ import { isSafeRelativePath, loadConfig, setPresetOption, SHA_RE, VERSION_RE } f
 
 export const PUBLIC_REPOSITORIES = new Map([
   ["astro-bro", "judaheland-dev/astrobro"],
-  ["tower-defense", "judaheland-dev/tower-defense"],
   ["racing-maze", "judaheland-dev/race-maze"]
 ]);
 

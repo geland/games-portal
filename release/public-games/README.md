@@ -1,12 +1,13 @@
 # Public-source game releases
 
-The private portal repository is the privileged release authority for Judah's
-three existing public game repositories. The source repositories stay public
-and never receive Apple or Cloudflare credentials.
+The public portal repository is the protected release authority for the
+currently approved releasable games in Judah's existing public repositories.
+The source repositories stay public and never receive Apple or Cloudflare
+credentials. Public visibility grants no write or release authority.
 
 `registry.json` is the complete allowlist. The manual workflow does not accept
 an arbitrary repository, slug, configuration path, or branch name. A release
-operator selects one of the three fixed games and supplies:
+operator selects one of the fixed enabled games and supplies:
 
 - the exact lowercase 40-character commit SHA already present in that public
   repository;
@@ -19,9 +20,9 @@ operator selects one of the three fixed games and supplies:
 The `build-public-game` job has no GitHub environment and receives no Apple or
 R2 secret. It checks trusted portal tooling and public source out to separate
 directories, verifies both exact commits, stages disposable project copies,
-and builds Web and unsigned universal Mac outputs. Astro Bro and Tower Defense
-receive a trusted, single-threaded Compatibility Web preset in the disposable
-stage because their public repositories currently contain only a Mac preset.
+and builds Web and unsigned universal Mac outputs. Astro Bro receives a
+trusted, single-threaded Compatibility Web preset in the disposable stage
+because its selected public commit contains only a Mac preset.
 The trusted Mac stage replaces `com.local.*` bundle identifiers and version
 metadata without modifying the public repository.
 
@@ -40,28 +41,29 @@ publisher. Immutable objects are verified byte-for-byte and `stable.json`
 remains the final write.
 
 These workflow checks are defense in depth, not the production trust anchor.
-Before adding any release secret, the private portal repository **MUST** protect
-the `main` branch and configure the `production` environment to deploy from
+Before adding any release secret, the public portal repository **MUST** protect
+the `main` branch and configure the `game-release-production` environment to deploy from
 selected branch `main` only, require a reviewer, and prevent self-review. If the
-current GitHub plan cannot enforce all of those controls for this private
-repository, do not store the release secrets or run this privileged workflow.
-Code in this repository cannot prove that those external GitHub settings are
-enabled.
+repository cannot enforce all of those controls, do not store the release
+secrets or run this privileged workflow. Code in this repository cannot prove
+that those external GitHub settings are enabled.
 
-Racing Maze is Mac-only until its separate Web compatibility/performance gate
-passes. The two trusted Web configurations do not replace physical
-Safari/controller/audio acceptance testing.
+Astro Bro is Web-only until Apple signing is provisioned and a later immutable
+version enables its Mac target. Racing Maze is Mac-only until Apple signing is
+provisioned; Web additionally requires its separate compatibility/performance
+gate. A Web configuration does not replace physical Safari/controller/audio
+acceptance testing.
 
-The public `judaheland-dev/race-maze` repository currently exists but is empty,
-so its selected local baseline must be pushed there before this workflow can
-check out that SHA. Tower Defense's selected release commit likewise must exist
-on its public remote before dispatch.
+Tower Defense is deliberately absent from the release allowlist while its
+publication hold is active. Its public repository may run credential-free
+validation, but this dispatcher cannot publish it. Racing Maze's selected
+baseline is present on its public remote.
 
-## Required private-repository environment
+## Required protected environment
 
 After the protected-`main`, main-only deployment branch, required-reviewer, and
-no-self-review controls above are enabled, configure the `production`
-environment on this private repository with:
+no-self-review controls above are enabled, configure the
+`game-release-production` environment on this public repository with:
 
 ```text
 CLOUDFLARE_ACCOUNT_ID

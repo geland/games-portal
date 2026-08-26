@@ -9,10 +9,9 @@ import { preparePublicStage, PUBLIC_REPOSITORIES, resolvePublicRelease, validate
 const portalRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../..");
 const registryFile = path.join(portalRoot, "release/public-games/registry.json");
 
-test("public releases use the exact three-repository allowlist", async () => {
+test("public releases use the exact currently releasable repository allowlist", async () => {
   assert.deepEqual([...PUBLIC_REPOSITORIES], [
     ["astro-bro", "judaheland-dev/astrobro"],
-    ["tower-defense", "judaheland-dev/tower-defense"],
     ["racing-maze", "judaheland-dev/race-maze"]
   ]);
   const release = await resolvePublicRelease({
@@ -68,11 +67,11 @@ test("trusted Web staging replaces public presets and forces Compatibility", asy
 test("trusted Mac staging patches bundle and version metadata only in its preset", async () => {
   const project = await mkdtemp(path.join(os.tmpdir(), "gregeland-mac-stage-"));
   await mkdir(path.join(project, "assets"));
-  await writeFile(path.join(project, "project.godot"), `[application]\nconfig/name="Astro"\n`);
-  await writeFile(path.join(project, "export_presets.cfg"), `[preset.0]\nname="macOS"\nplatform="macOS"\n[preset.0.options]\napplication/bundle_identifier="com.local.astrobro"\napplication/short_version=""\napplication/version=""\n`);
-  await preparePublicStage({ registryFile, gameId: "astro-bro", target: "mac", projectDirectory: project, version: "v2.3.4" });
+  await writeFile(path.join(project, "project.godot"), `[application]\nconfig/name="Racing Maze"\n`);
+  await writeFile(path.join(project, "export_presets.cfg"), `[preset.0]\nname="macOS"\nplatform="macOS"\n[preset.0.options]\napplication/bundle_identifier="com.local.racingmaze"\napplication/short_version=""\napplication/version=""\n`);
+  await preparePublicStage({ registryFile, gameId: "racing-maze", target: "mac", projectDirectory: project, version: "v2.3.4" });
   const presets = await readFile(path.join(project, "export_presets.cfg"), "utf8");
-  assert.match(presets, /application\/bundle_identifier="com.gregeland.astrobro"/);
+  assert.match(presets, /application\/bundle_identifier="com.gregeland.racingmaze"/);
   assert.match(presets, /application\/short_version="2.3.4"/);
   assert.match(presets, /application\/version="2.3.4"/);
   assert.doesNotMatch(presets, /com\.local/);

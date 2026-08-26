@@ -8,7 +8,7 @@
     "entry": "index.html"
   },
   "mac": {
-    "enabled": true,
+    "enabled": false,
     "preset": "macOS",
     "bundleName": "Astro Bro",
     "entitlements": null

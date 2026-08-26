@@ -1,13 +1,15 @@
 # Gregeland Godot game repository template
 
 This directory is copied into a private game repository. It validates a Godot
-4.6.2 project on ordinary pushes and publishes immutable Web and/or universal
-macOS releases only from an exact semantic version tag or an explicitly
-dispatched commit.
+4.6.2 project on ordinary pushes and builds short-lived unsigned Web and/or
+universal macOS candidates only from an exact semantic version tag or an
+explicitly dispatched commit. It does not publish.
 
-The template is Gregeland-specific: it publishes to the existing
-`gregeland-games-releases` R2 contract consumed by `games.gregeland.com`.
-It does not deploy the portal, edit DNS, create repositories, or create tokens.
+The template is Gregeland-specific, but it receives no Apple, Cloudflare, or R2
+credential. Protected signing and publication run separately from the public
+`geland/games-portal` release authority after an artifact handoff is explicitly
+approved. This template does not deploy the portal, edit DNS, create
+repositories, or create tokens.
 
 ## Install it in a game repository
 
@@ -46,42 +48,11 @@ npm test --prefix .github/release-tools
 
 ## GitHub configuration
 
-Create repository variables:
+No repository variable or secret is required. Leave Actions' default workflow
+token read-only. An exact tag or `workflow_dispatch` is a deliberate build
+gate, but the resulting one-day artifact is unsigned and unpublished.
 
-```text
-GAME_SLUG=<same value as .gregeland-release.json>
-R2_BUCKET=gregeland-games-releases
-R2_PUBLIC_BASE=https://play.games.gregeland.com
-```
-
-Create these encrypted secrets, preferably on a `production` environment:
-
-```text
-CLOUDFLARE_ACCOUNT_ID
-R2_ACCESS_KEY_ID
-R2_SECRET_ACCESS_KEY
-APPLE_DEVELOPER_ID_P12_BASE64       # Mac target only
-APPLE_DEVELOPER_ID_P12_PASSWORD     # Mac target only
-APPLE_TEAM_ID                       # Mac target only
-APPLE_NOTARY_KEY_P8_BASE64          # Mac target only
-APPLE_NOTARY_KEY_ID                 # Mac target only
-APPLE_NOTARY_ISSUER_ID              # Mac target only
-```
-
-Use a different Object Read & Write R2 token for each private game repository,
-limited to `gregeland-games-releases`. At publish time the tool derives a
-two-hour session credential limited further to `HeadObject`, `GetObject`, and
-`PutObject` under only that game's release/version, download/version, and
-manifest prefixes. The long-lived parent token is passed only to the publish
-step. Do not reuse another application's Cloudflare token.
-
-Configure the `production` environment with the strongest protections
-available on the GitHub plan. GitHub does not offer required reviewers for
-private repositories on every plan; an exact tag is still an explicit release,
-and `workflow_dispatch` remains a deliberate manual gate. Review the release
-commit because its workflow code receives signing and publication credentials.
-
-## Release
+## Candidate build
 
 For the normal path, tag the exact reviewed commit:
 
@@ -95,52 +66,12 @@ regular expressions; the authorization job rejects anything that is not
 exactly `vMAJOR.MINOR.PATCH` (with no leading zeroes or suffix). A manual run
 requires both that exact version and the full 40-character commit SHA.
 
-Normal publication fails before uploading if any immutable key already exists.
-Its version must also be strictly newer than every version already recorded in
-the stable manifest or version index; moving stable to an older release is a
-separate explicit rollback operation.
-The complete release manifest must fit the portal's 32 KiB routing limit and
-the version index must fit the publisher's 1 MiB readback limit; both checks
-happen before any immutable upload begins.
-The R2 custom origin must also remain uncached: preflight missing-object probes
-cover every advertised directory/extension combination and fail closed if
-Cloudflare reports cached or ambiguous behavior. The probe filename namespace
-is reserved and rejected in real artifacts. Do not enable CDN caching until a
-managed zero-TTL rule for 404/410 responses and an updated release recovery
-contract are in place.
-Each new object is also written with `If-None-Match: *`, checked through R2 by
-size and a full SHA-256 readback, then the immutable version manifest is
-written. Every file is next smoke-checked with its MIME type through the public
-custom domain using bounded retry/backoff. The conditional version index
-follows, and `stable.json` is the final write. Writing the immutable manifest
-before the public smoke check makes a transient origin failure safely resumable
-without trying to reproduce notarized ZIP bytes.
-
-### Safely resume a partial release
-
-If a transient failure occurred after one or more immutable objects uploaded,
-manually dispatch the same version and commit with `resume_existing=true`.
-Resume mode never overwrites an immutable key. It may finish promoting a
-strictly newer verified partial release when no still-newer version is indexed,
-but never moves stable backward; rollback is separate. If an immutable version
-manifest exists, the publisher validates its slug, version, source commit,
-targets, and every file descriptor, then treats it as authoritative and reads
-every advertised remote artifact back to verify its complete SHA-256 digest.
-This deliberately does not
-compare a newly signed Mac ZIP with the prior ZIP because signing and
-notarization are not reproducible byte-for-byte. The existing index entry and
-same-version stable manifest must exactly match that authoritative manifest.
-
-Without an immutable version manifest, automatic resume can fill gaps only
-after existing Web artifacts match the rebuilt bytes. If a signed Mac ZIP
-already exists, stop: automatic resume cannot establish which notarized bytes
-are authoritative. Preserve/use the original notarized artifact through an
-explicitly approved manual recovery procedure. Any mismatch stops for manual
-investigation before mutable release pointers are written.
-
-Do not delete partial release keys just to make a run green. Object removal is
-an exceptional, separately approved operation after inspecting the failed run
-and the bucket.
+The workflow uploads unsigned candidates with one-day retention. These files
+are build evidence, not a public release. Never present an unsigned Mac
+candidate as a downloadable game. The protected portal workflow must validate
+the exact source/run/artifact identity, repackage it into the constrained
+Gregeland container, and perform signing/publication on a fresh runner before a
+stable manifest can exist.
 
 ## What the workflow verifies
 
@@ -149,11 +80,8 @@ and the bucket.
 - Release configuration, renderer, presets, and dev-secret hygiene are checked.
 - Import and project-specific headless tests run against a sanitized stage.
 - Web output must include non-empty HTML, JavaScript, PCK, and valid WebAssembly.
-- Mac output is signed inside-out with a Developer ID Application identity in
-  an ephemeral keychain, hardened runtime and timestamp, then notarized with
-  `notarytool`, stapled, checked by `codesign`, `stapler`, and `spctl`, and ZIP
-  tested before upload.
-- Only successfully built targets appear in the release manifest.
+- Mac output remains unsigned. Signing, notarization, stapling, verification,
+  and release-manifest publication belong only to the protected portal job.
 
 The automated checks do not replace real Safari/iPhone/iPad, controller, audio,
 camera, LAN, or fresh-Mac launch acceptance tests. Native iOS/TestFlight/App

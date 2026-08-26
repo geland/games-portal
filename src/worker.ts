@@ -10,13 +10,16 @@ type DownloadTarget = {
 type ReleaseManifest = {
   slug: string;
   version: string;
+  sourceCommit: string;
+  publishedAt: string;
   web?: ReleaseTarget;
-  tracker?: ReleaseTarget;
   mac?: DownloadTarget;
+  files: Array<{ key: string; size: number; sha256: string; contentType: string }>;
 };
 
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-const VERSION_RE = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/;
+const VERSION_RE = /^v(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)$/;
+const SHA_RE = /^[0-9a-f]{40}$/;
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
@@ -53,7 +56,7 @@ async function routeRequest(request: Request, env: Env): Promise<Response> {
   }
 
   if (url.pathname === "/tracker" || url.pathname === "/tracker/") {
-    return redirectToRelease(env, "web-dodge", "tracker");
+    return redirectToRelease(env, "motion-tracker", "web");
   }
 
   return env.ASSETS.fetch(request);
@@ -62,7 +65,7 @@ async function routeRequest(request: Request, env: Env): Promise<Response> {
 async function redirectToRelease(
   env: Env,
   slug: string,
-  target: "web" | "tracker" | "mac"
+  target: "web" | "mac"
 ): Promise<Response> {
   if (!SLUG_RE.test(slug)) {
     return textResponse("Unknown game", 404);
@@ -77,10 +80,9 @@ async function redirectToRelease(
   if (target === "mac") {
     path = manifest.mac?.key;
   } else {
-    const entry = manifest[target]?.entry;
+    const entry = manifest.web?.entry;
     if (entry && isSafeRelativePath(entry)) {
-      const section = target === "tracker" ? "tracker" : "web";
-      path = `releases/${slug}/${manifest.version}/${section}/${entry}`;
+      path = `releases/${slug}/${manifest.version}/web/${entry}`;
     }
   }
 
@@ -92,7 +94,15 @@ async function redirectToRelease(
   }
 
   const publicBase = new URL(env.R2_PUBLIC_BASE);
-  return Response.redirect(new URL(`/${path}`, publicBase).toString(), 302);
+  return new Response(null, {
+    status: 302,
+    headers: {
+      "Cache-Control": "no-store",
+      Location: new URL(`/${path}`, publicBase).toString(),
+      "Referrer-Policy": "no-referrer",
+      "X-Content-Type-Options": "nosniff"
+    }
+  });
 }
 
 async function readManifest(env: Env, slug: string): Promise<ReleaseManifest | null> {
@@ -112,17 +122,26 @@ async function readManifest(env: Env, slug: string): Promise<ReleaseManifest | n
 function isReleaseManifest(value: unknown): value is ReleaseManifest {
   if (!value || typeof value !== "object") return false;
   const candidate = value as Record<string, unknown>;
+  const allowedKeys = new Set(["slug", "version", "sourceCommit", "publishedAt", "web", "mac", "files"]);
+  if (Object.keys(candidate).some((key) => !allowedKeys.has(key))) return false;
   if (!(typeof candidate.slug === "string"
     && SLUG_RE.test(candidate.slug)
     && typeof candidate.version === "string"
-    && VERSION_RE.test(candidate.version))) {
+    && VERSION_RE.test(candidate.version)
+    && typeof candidate.sourceCommit === "string"
+    && SHA_RE.test(candidate.sourceCommit)
+    && typeof candidate.publishedAt === "string"
+    && Number.isFinite(Date.parse(candidate.publishedAt))
+    && new Date(candidate.publishedAt).toISOString() === candidate.publishedAt)) {
     return false;
   }
 
   const validEntry = (target: unknown): boolean => {
     if (target === undefined) return true;
     if (!target || typeof target !== "object") return false;
-    const entry = (target as Record<string, unknown>).entry;
+    const record = target as Record<string, unknown>;
+    if (Object.keys(record).some((key) => key !== "entry")) return false;
+    const entry = record.entry;
     return typeof entry === "string" && isSafeRelativePath(entry);
   };
 
@@ -130,24 +149,38 @@ function isReleaseManifest(value: unknown): value is ReleaseManifest {
     if (target === undefined) return true;
     if (!target || typeof target !== "object") return false;
     const download = target as Record<string, unknown>;
+    if (Object.keys(download).some((key) => key !== "key" && key !== "filename")) return false;
+    const expectedKey = `downloads/${candidate.slug}/${candidate.version}/${candidate.slug}-macos-universal.zip`;
     return typeof download.key === "string"
-      && isSafeRelativePath(download.key)
-      && download.key.startsWith(`downloads/${candidate.slug}/${candidate.version}/`)
-      && (download.filename === undefined
-        || (typeof download.filename === "string"
-          && download.filename.length > 0
-          && download.filename.length <= 255
-          && !/[\\/\u0000-\u001f\u007f]/.test(download.filename)));
+      && download.key === expectedKey
+      && download.filename === `${candidate.slug}-macos-universal.zip`;
   };
 
-  return validEntry(candidate.web)
-    && validEntry(candidate.tracker)
-    && validDownload(candidate.mac);
+  if (!validEntry(candidate.web) || !validDownload(candidate.mac)) return false;
+  if (candidate.web === undefined && candidate.mac === undefined) return false;
+  if (!Array.isArray(candidate.files) || candidate.files.length === 0) return false;
+  const keys = new Set<string>();
+  for (const value of candidate.files) {
+    if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+    const file = value as Record<string, unknown>;
+    if (Object.keys(file).some((key) => !["key", "size", "sha256", "contentType"].includes(key))) return false;
+    if (typeof file.key !== "string" || !isSafeRelativePath(file.key) || keys.has(file.key)) return false;
+    if (!Number.isSafeInteger(file.size) || (file.size as number) <= 0) return false;
+    if (typeof file.sha256 !== "string" || !/^[0-9a-f]{64}$/.test(file.sha256)) return false;
+    if (typeof file.contentType !== "string" || file.contentType.length === 0) return false;
+    keys.add(file.key);
+  }
+  const web = candidate.web as ReleaseTarget | undefined;
+  const mac = candidate.mac as DownloadTarget | undefined;
+  if (web && !keys.has(`releases/${candidate.slug}/${candidate.version}/web/${web.entry}`)) return false;
+  if (mac && !keys.has(mac.key)) return false;
+  return true;
 }
 
 function securityHeaders(contentType: string): Headers {
   return new Headers({
     "Content-Type": contentType,
+    "Cache-Control": "no-store",
     "X-Content-Type-Options": "nosniff",
     "Referrer-Policy": "strict-origin-when-cross-origin",
     "Permissions-Policy": "camera=(self), microphone=()"

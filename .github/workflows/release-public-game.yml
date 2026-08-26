@@ -1,16 +1,15 @@
-name: Publish Judah public game
+name: Publish approved public-source game
 run-name: ${{ inputs.game }} ${{ inputs.version }} from ${{ inputs.source_sha }}
 
 on:
   workflow_dispatch:
     inputs:
       game:
-        description: Approved Judah-owned public game
+        description: Approved releasable Judah-owned public game
         required: true
         type: choice
         options:
           - astro-bro
-          - tower-defense
           - racing-maze
       source_sha:
         description: Exact lowercase 40-character commit SHA from the selected public repository
@@ -292,7 +291,7 @@ jobs:
     permissions:
       contents: read
     environment:
-      name: production
+      name: game-release-production
       url: https://games.gregeland.com
     env:
       RELEASE_TOOL_ROOT: ${{ github.workspace }}/trusted/templates/game-repo/.github/release-tools
