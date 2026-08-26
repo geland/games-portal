@@ -1,6 +1,6 @@
-# Gregeland Games
+# Geland Games
 
-The public family arcade at `games.gregeland.com`.
+The family game shelf at `games.gregeland.com`.
 
 The portal itself is served as free Cloudflare Worker static assets. Versioned
 Godot Web exports and notarized macOS downloads live in the

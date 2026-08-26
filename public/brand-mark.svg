@@ -1,4 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-label="Geland Games">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-labelledby="title desc">
+  <title id="title">Geland Games mark</title>
+  <desc id="desc">Two colorful letter Gs together on a warm, rounded game tile.</desc>
   <path d="M31 11h97c15 0 22 8 23 23l2 91c1 16-8 24-23 25l-98 1c-15 0-23-9-23-24L8 35C8 19 16 11 31 11Z" fill="#F6EFE2" stroke="#18231D" stroke-width="8" stroke-linejoin="round"/>
   <path d="M68 53c-5-7-12-11-21-11-16 0-27 12-27 30 0 19 12 31 29 31 10 0 17-4 22-10V75H51" fill="none" stroke="#2762D2" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
   <path d="M125 53c-5-7-12-11-21-11-16 0-27 12-27 30 0 19 12 31 29 31 10 0 17-4 22-10V75h-20" fill="none" stroke="#F05A3F" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>

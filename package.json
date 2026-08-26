@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Family game library and release gateway for games.gregeland.com",
+  "description": "Geland Games family library and release gateway for games.gregeland.com",
   "scripts": {
     "dev": "wrangler dev",
     "build": "tsc --noEmit && wrangler deploy --dry-run --outdir dist",
