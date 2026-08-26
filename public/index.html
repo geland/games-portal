@@ -3,147 +3,251 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#10142c">
-    <meta name="description" content="A homemade arcade for the games we build and play together.">
+    <meta name="theme-color" content="#f6efe2">
+    <meta name="description" content="Playful, homemade games from Geland Games, built for family, friends, and playing together.">
     <meta property="og:type" content="website">
-    <meta property="og:title" content="Gregeland Games">
-    <meta property="og:description" content="A homemade arcade for the games we build and play together.">
+    <meta property="og:title" content="Geland Games">
+    <meta property="og:description" content="Playful, homemade games built for family, friends, and playing together.">
     <meta property="og:url" content="https://games.gregeland.com/">
-    <meta property="og:image" content="https://games.gregeland.com/og.png">
+    <meta property="og:image" content="https://games.gregeland.com/og.png?v=geland-2">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Gregeland Games">
-    <meta name="twitter:description" content="A homemade arcade for the games we build and play together.">
-    <meta name="twitter:image" content="https://games.gregeland.com/og.png">
-    <title>Gregeland Games</title>
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="/styles.css">
-    <script src="/app.js" defer></script>
+    <meta name="twitter:title" content="Geland Games">
+    <meta name="twitter:description" content="Playful, homemade games built for family, friends, and playing together.">
+    <meta name="twitter:image" content="https://games.gregeland.com/og.png?v=geland-2">
+    <title>Geland Games</title>
+    <link rel="icon" href="/favicon.svg?v=geland-2" type="image/svg+xml">
+    <link rel="stylesheet" href="/styles.css?v=geland-3">
+    <script src="/app.js?v=geland-3" defer></script>
   </head>
   <body id="top">
-    <a class="skip-link" href="#games">Skip to games</a>
+    <a class="skip-link" href="#main-content">Skip to main content</a>
+
     <header class="site-header">
-      <a class="brand" href="/" aria-label="Gregeland Games home">
-        <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
-        <span>Gregeland <strong>Games</strong></span>
-      </a>
-      <nav aria-label="Primary navigation">
-        <a href="#games">Game library</a>
-        <a href="/tracker">Motion tracker</a>
-      </nav>
+      <div class="header-inner">
+        <a class="brand" href="/" aria-label="Geland Games home">
+          <img src="/brand-mark.svg?v=geland-2" alt="" width="52" height="52">
+          <span class="brand-wordmark">Geland Games</span>
+        </a>
+        <nav aria-label="Primary navigation">
+          <a href="#games">Games</a>
+          <a href="#story">Our story</a>
+        </nav>
+      </div>
     </header>
 
-    <main>
+    <main id="main-content">
       <section class="hero" aria-labelledby="hero-title">
-        <div class="hero-copy">
-          <p class="eyebrow"><span></span> Gregeland Games</p>
-          <h1 id="hero-title">Games we made.</h1>
-          <p class="hero-text">Choose a game to play in your browser or download for Mac.</p>
+        <div class="hero-inner">
+          <div class="hero-copy">
+            <h1 id="hero-title">Come play something we made.</h1>
+            <p>Browser games, Mac downloads, motion experiments, and whatever we dream up next—made at home for family, friends, and anyone who wants to join in.</p>
+            <div class="hero-actions">
+              <a class="button button-primary" href="#games">Pick a game</a>
+              <a class="button button-secondary" href="#story">Meet the workshop</a>
+            </div>
+          </div>
+
+          <div class="play-board" aria-hidden="true">
+            <div class="arcade-cabinet">
+              <div class="arcade-marquee">
+                <img src="/brand-mark.svg?v=geland-2" alt="">
+                <span>Geland Games</span>
+              </div>
+              <div class="arcade-bezel">
+                <div class="arcade-screen">
+                  <img src="/brand-mark.svg?v=geland-2" alt="">
+                  <span class="player-light player-one"></span>
+                  <span class="player-light player-two"></span>
+                </div>
+              </div>
+              <div class="arcade-controls">
+                <span class="joystick joystick-one"></span>
+                <span class="arcade-button arcade-button-one"></span>
+                <span class="joystick joystick-two"></span>
+                <span class="arcade-button arcade-button-two"></span>
+              </div>
+              <div class="arcade-front">
+                <span class="speaker-grille"></span>
+                <span class="coin-slot"></span>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
       <section class="library" id="games" aria-labelledby="games-title">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow"><span></span> The library</p>
-            <h2 id="games-title">Pick your next adventure</h2>
+        <div class="library-inner">
+          <div class="section-intro">
+            <div>
+              <p class="section-kicker">The game shelf</p>
+              <h2 id="games-title">Games</h2>
+              <p>Finished favorites, lively experiments, and a few things we are still tinkering with.</p>
+            </div>
+            <p class="game-count" id="game-count" aria-live="polite">8 games + 1 tool on the shelf</p>
           </div>
-          <div class="filters" role="group" aria-label="Filter games">
-            <button class="filter active" type="button" data-filter="all" aria-pressed="true">All</button>
-            <button class="filter" type="button" data-filter="browser" aria-pressed="false">Play online</button>
+
+          <div class="filters" role="group" aria-label="Filter games by platform">
+            <button class="filter active" type="button" data-filter="all" aria-pressed="true">All games</button>
+            <button class="filter" type="button" data-filter="browser" aria-pressed="false">Browser</button>
             <button class="filter" type="button" data-filter="mac" aria-pressed="false">Mac</button>
             <button class="filter" type="button" data-filter="motion" aria-pressed="false">Motion</button>
           </div>
+
+          <div class="game-grid">
+            <article class="game-card" data-platforms="browser mac">
+              <div class="card-art" aria-hidden="true">
+                <img src="/game-art/astro-bro.webp?v=geland-2" alt="" width="960" height="540" loading="lazy" decoding="async">
+              </div>
+              <div class="card-body">
+                <div class="game-meta"><span>Space roguelite</span><span>1–4 players</span></div>
+                <h3>Astro Bro</h3>
+                <p>Stack absurd weapons, share the arena, and try to keep the galaxy from getting too crowded.</p>
+                <div class="card-actions">
+                  <a class="button button-primary" href="/play/astro-bro">Play in browser</a>
+                  <a class="button button-secondary" href="/download/astro-bro/mac">Download for Mac</a>
+                </div>
+              </div>
+            </article>
+
+            <article class="game-card" data-platforms="browser mac">
+              <div class="card-art" aria-hidden="true">
+                <img src="/game-art/butts.webp?v=geland-2" alt="" width="960" height="540" loading="lazy" decoding="async">
+              </div>
+              <div class="card-body">
+                <div class="game-meta"><span>Simultaneous artillery</span><span>1–4 players</span></div>
+                <h3>Butts</h3>
+                <p>Choose your move in secret, lock it in, then watch everyone’s terrible ideas happen at once.</p>
+                <div class="card-actions">
+                  <a class="button button-primary" href="/play/butts">Play in browser</a>
+                  <a class="button button-secondary" href="/download/butts/mac">Download for Mac</a>
+                </div>
+              </div>
+            </article>
+
+            <article class="game-card" data-platforms="development">
+              <div class="card-art" aria-hidden="true">
+                <img src="/game-art/tower-defense.webp?v=geland-2" alt="" width="960" height="540" loading="lazy" decoding="async">
+              </div>
+              <div class="card-body">
+                <div class="game-meta"><span>Tower defense</span><span>In development</span></div>
+                <h3>Tower Defense</h3>
+                <p>Build a maze, defend your side, and send trouble toward somebody else. We’re still tuning the rules.</p>
+                <div class="card-actions">
+                  <span class="status-pill">Still tinkering</span>
+                </div>
+              </div>
+            </article>
+
+            <article class="game-card" data-platforms="mac">
+              <div class="card-art" aria-hidden="true">
+                <img src="/game-art/racing-maze.webp?v=geland-2" alt="" width="960" height="540" loading="lazy" decoding="async">
+              </div>
+              <div class="card-body">
+                <div class="game-meta"><span>Maze racing</span><span>Mac</span></div>
+                <h3>Racing Maze</h3>
+                <p>Find the fastest line through twisty streets—and save a few ridiculous items for the final lap.</p>
+                <div class="card-actions">
+                  <a class="button button-primary" href="/download/racing-maze/mac">Download for Mac</a>
+                </div>
+              </div>
+            </article>
+
+            <article class="game-card" data-platforms="mac">
+              <div class="card-art" aria-hidden="true">
+                <img src="/game-art/blend-in.webp?v=geland-2" alt="" width="960" height="540" loading="lazy" decoding="async">
+              </div>
+              <div class="card-body">
+                <div class="game-meta"><span>Social stealth</span><span>Local multiplayer</span></div>
+                <h3>Blend In</h3>
+                <p>Hide in a bustling crowd, guard your king, and spot the suspiciously human player before they spot you.</p>
+                <div class="card-actions">
+                  <a class="button button-primary" href="/download/blend-in/mac">Download for Mac</a>
+                </div>
+              </div>
+            </article>
+
+            <article class="game-card" data-platforms="browser motion">
+              <div class="card-art" aria-hidden="true">
+                <img src="/game-art/motion-dodge.webp?v=geland-2" alt="" width="960" height="540" loading="lazy" decoding="async">
+              </div>
+              <div class="card-body">
+                <div class="game-meta"><span>Motion game</span><span>Browser</span></div>
+                <h3>Motion Dodge</h3>
+                <p>Give the webcam some room, then duck, jump, punch, and weave through the obstacle course.</p>
+                <div class="card-actions">
+                  <a class="button button-primary" href="/play/web-dodge">Play in browser</a>
+                </div>
+              </div>
+            </article>
+
+            <article class="game-card" data-platforms="browser motion" data-kind="tool">
+              <div class="card-art" aria-hidden="true">
+                <img src="/game-art/motion-tracker.webp?v=geland-2" alt="" width="960" height="540" loading="lazy" decoding="async">
+              </div>
+              <div class="card-body">
+                <div class="game-meta"><span>Setup tool</span><span>Browser</span></div>
+                <h3>Motion Tracker</h3>
+                <p>Open the camera once, calibrate the room, and send movement controls to the motion games.</p>
+                <div class="card-actions">
+                  <a class="button button-primary" href="/tracker">Open tracker</a>
+                </div>
+              </div>
+            </article>
+
+            <article class="game-card" data-platforms="mac motion">
+              <div class="card-art" aria-hidden="true">
+                <img src="/game-art/motion-balloon.webp?v=geland-2" alt="" width="960" height="540" loading="lazy" decoding="async">
+              </div>
+              <div class="card-body">
+                <div class="game-meta"><span>Motion game</span><span>Mac + tracker</span></div>
+                <h3>Motion Balloon</h3>
+                <p>Keep a balloon airborne with hands, heads, feet, and whatever desperate move works next.</p>
+                <div class="card-actions">
+                  <a class="button button-primary" href="/download/balloon/mac">Download for Mac</a>
+                  <a class="button button-secondary" href="/tracker">Open tracker</a>
+                </div>
+              </div>
+            </article>
+
+            <article class="game-card" data-platforms="mac motion">
+              <div class="card-art" aria-hidden="true">
+                <img src="/game-art/motion-labyrinth.webp?v=geland-2" alt="" width="960" height="540" loading="lazy" decoding="async">
+              </div>
+              <div class="card-body">
+                <div class="game-meta"><span>Motion game</span><span>Mac + tracker</span></div>
+                <h3>Motion Labyrinth</h3>
+                <p>Lean together to guide a marble through a living-room-sized maze without losing your balance.</p>
+                <div class="card-actions">
+                  <a class="button button-primary" href="/download/labyrinth/mac">Download for Mac</a>
+                  <a class="button button-secondary" href="/tracker">Open tracker</a>
+                </div>
+              </div>
+            </article>
+          </div>
         </div>
+      </section>
 
-        <div class="game-grid">
-          <article class="game-card card-space" data-platforms="browser mac">
-            <div class="card-art" aria-hidden="true"><span class="art-ship">▲</span><i></i><i></i><i></i></div>
-            <div class="card-body">
-              <p class="card-kicker">Space roguelite · 1–4 players</p>
-              <h3>Astro Bro</h3>
-              <p>Build ridiculous weapon combos and hold the arena together when the galaxy gets crowded.</p>
-              <div class="card-links"><a href="/play/astro-bro">Play in browser</a><a href="/download/astro-bro/mac">Download for Mac</a></div>
+      <section class="story" id="story" aria-labelledby="story-title">
+        <div class="story-inner">
+          <div class="section-intro">
+            <div>
+              <p class="section-kicker">Our little workshop</p>
+              <h2 id="story-title">Made at home, shared when it’s fun.</h2>
             </div>
-          </article>
-
-          <article class="game-card card-butts" data-platforms="browser mac">
-            <div class="card-art" aria-hidden="true"><span class="art-cloud">B</span><span class="art-boom">✦</span></div>
-            <div class="card-body">
-              <p class="card-kicker">Simultaneous artillery · 1–4 players</p>
-              <h3>Butts</h3>
-              <p>Plan every move, lock in the chaos, then watch all the attacks collide on one shared timeline.</p>
-              <div class="card-links"><a href="/play/butts">Play in browser</a><a href="/download/butts/mac">Download for Mac</a></div>
-            </div>
-          </article>
-
-          <article class="game-card card-tower" data-platforms="browser mac">
-            <div class="card-art" aria-hidden="true"><span class="art-tower">♜</span><span class="art-path"></span></div>
-            <div class="card-body">
-              <p class="card-kicker">Tower defense · In development</p>
-              <h3>Tower Defense</h3>
-              <p>Build a maze, fortify your half, and send an army through the defenses across the board. Publishing is on hold while placement rules are tightened.</p>
-              <div class="card-links"><span>Not published yet</span></div>
-            </div>
-          </article>
-
-          <article class="game-card card-racing" data-platforms="mac">
-            <div class="card-art" aria-hidden="true"><span class="art-road"></span><span class="art-car">▰</span></div>
-            <div class="card-body">
-              <p class="card-kicker">Maze racing · Mac</p>
-              <h3>Racing Maze</h3>
-              <p>Thread impossible streets, steal the best line, and unleash a garage full of chaotic race items.</p>
-              <div class="card-links"><a href="/download/racing-maze/mac">Download for Mac</a></div>
-            </div>
-          </article>
-
-          <article class="game-card card-stealth" data-platforms="mac">
-            <div class="card-art" aria-hidden="true"><span class="art-crowd">● ● ●<br>● ◉ ●<br>● ● ●</span></div>
-            <div class="card-body">
-              <p class="card-kicker">Social stealth · Local multiplayer</p>
-              <h3>Blend In</h3>
-              <p>Disappear into the crowd, protect your king, and figure out which suspicious face belongs to a friend.</p>
-              <div class="card-links"><a href="/download/blend-in/mac">Download for Mac</a></div>
-            </div>
-          </article>
-
-          <article class="game-card card-dodge" data-platforms="browser motion">
-            <div class="card-art" aria-hidden="true"><span class="art-dodge">●</span><i></i><i></i><i></i></div>
-            <div class="card-body">
-              <p class="card-kicker">Motion game · Browser</p>
-              <h3>Motion Dodge</h3>
-              <p>Use the webcam to duck, jump, punch, and weave through a neon obstacle course.</p>
-              <div class="card-links"><a href="/play/web-dodge">Play in browser</a></div>
-            </div>
-          </article>
-
-          <article class="game-card card-balloon" data-platforms="mac motion">
-            <div class="card-art" aria-hidden="true"><span class="art-balloon"></span></div>
-            <div class="card-body">
-              <p class="card-kicker">Motion game · Mac + browser tracker</p>
-              <h3>Motion Balloon</h3>
-              <p>Keep the balloon in the air using your hands, head, and feet.</p>
-              <div class="card-links"><a href="/download/balloon/mac">Download for Mac</a><a href="/tracker">Open tracker</a></div>
-            </div>
-          </article>
-
-          <article class="game-card card-labyrinth" data-platforms="mac motion">
-            <div class="card-art" aria-hidden="true"><span class="art-maze"></span><i></i></div>
-            <div class="card-body">
-              <p class="card-kicker">Motion game · Mac + browser tracker</p>
-              <h3>Motion Labyrinth</h3>
-              <p>Lean and balance your way through a living-room-sized marble maze.</p>
-              <div class="card-links"><a href="/download/labyrinth/mac">Download for Mac</a><a href="/tracker">Open tracker</a></div>
-            </div>
-          </article>
-
+          </div>
+          <div class="story-copy">
+            <p>Geland Games is our label for the things we make to play together. Some begin as a family joke, some as a weekend experiment, and a few become games we keep coming back to.</p>
+          </div>
         </div>
       </section>
     </main>
 
-    <footer>
-      <span>Gregeland Games</span>
-      <p>Built at home · <span id="year">2026</span></p>
-      <a href="#top">Back to top ↑</a>
+    <footer class="site-footer">
+      <div class="footer-inner">
+        <p><strong>Geland Games</strong> · Built at home</p>
+        <p>© <span id="year">2026</span></p>
+        <a href="#top">Back to top <span aria-hidden="true">↑</span></a>
+      </div>
     </footer>
   </body>
 </html>
