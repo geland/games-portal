@@ -24,6 +24,9 @@ test("public releases use the exact currently releasable repository allowlist", 
   assert.equal(release.repository, "judaheland-dev/astrobro");
   assert.equal(release.bundleIdentifier, "com.gregeland.astrobro");
   assert.equal(release.webEnabled, true);
+  assert.equal(release.macEnabled, true);
+  assert.equal(release.macPreset, "macOS");
+  assert.equal(release.macBundleName, "Astro Bro");
   await assert.rejects(resolvePublicRelease({
     registryFile, gameId: "other", sourceSha: "a".repeat(40), version: "v1.2.3", resume: "false"
   }), /allowlist/);
@@ -75,4 +78,23 @@ test("trusted Mac staging patches bundle and version metadata only in its preset
   assert.match(presets, /application\/short_version="2.3.4"/);
   assert.match(presets, /application\/version="2.3.4"/);
   assert.doesNotMatch(presets, /com\.local/);
+});
+
+test("trusted Astro Bro Mac staging uses its committed macOS preset identity", async () => {
+  const project = await mkdtemp(path.join(os.tmpdir(), "gregeland-astro-mac-stage-"));
+  await writeFile(path.join(project, "project.godot"), `[application]\nconfig/name="Astro Bro"\n`);
+  await writeFile(path.join(project, "export_presets.cfg"), `[preset.0]\nname="macOS"\nplatform="macOS"\n[preset.0.options]\napplication/bundle_identifier="com.local.astrobro"\napplication/short_version=""\napplication/version=""\n`);
+  const release = await preparePublicStage({
+    registryFile,
+    gameId: "astro-bro",
+    target: "mac",
+    projectDirectory: project,
+    version: "v1.0.0"
+  });
+  const presets = await readFile(path.join(project, "export_presets.cfg"), "utf8");
+  assert.equal(release.macBundleName, "Astro Bro");
+  assert.equal(release.macPreset, "macOS");
+  assert.match(presets, /application\/bundle_identifier="com.gregeland.astrobro"/);
+  assert.match(presets, /application\/short_version="1.0.0"/);
+  assert.match(presets, /application\/version="1.0.0"/);
 });

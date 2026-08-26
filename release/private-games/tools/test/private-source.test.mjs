@@ -50,6 +50,48 @@ test("Motion targets resolve one package from their shared exact-tag run", async
   ]);
 });
 
+test("native Motion targets resolve one Mac package from their shared exact-tag run", async () => {
+  const sourceSha = "56947de9ea16e9e4884295488101e9bb11f0e08e";
+  const release = await resolvePrivateRelease({
+    registryFile,
+    gameId: "balloon",
+    sourceSha,
+    version: "v1.0.0",
+    profile: "mac",
+    buildRunId: "32930000000",
+    resume: "false"
+  });
+  assert.equal(release.repository, "geland/motion-games");
+  assert.equal(release.sourceWorkflow, ".github/workflows/native-release-candidates.yml");
+  assert.equal(release.sourceWorkflowName, "Native candidates from v1.0.0 (push)");
+  assert.equal(release.webEnabled, false);
+  assert.equal(release.macEnabled, true);
+  assert.equal(release.candidateWebEnabled, false);
+  assert.equal(release.candidateMacEnabled, true);
+  assert.equal(release.macBundleName, "Motion Balloon");
+  assert.equal(release.bundleIdentifier, "com.gregeland.motionballoon");
+  assert.equal(release.macArtifactName, "balloon-v1.0.0-56947de9ea16-mac");
+  assert.equal(release.macPackageFilename, "balloon-v1.0.0-56947de9ea16-mac.gpkg");
+  assert.deepEqual(release.candidateArtifactNames, [
+    "balloon-v1.0.0-56947de9ea16-mac",
+    "labyrinth-v1.0.0-56947de9ea16-mac"
+  ]);
+
+  const labyrinth = await resolvePrivateRelease({
+    registryFile,
+    gameId: "labyrinth",
+    sourceSha,
+    version: "v1.0.0",
+    profile: "mac",
+    buildRunId: "32930000000",
+    resume: "false"
+  });
+  assert.equal(labyrinth.macBundleName, "Motion Labyrinth");
+  assert.equal(labyrinth.bundleIdentifier, "com.gregeland.motionlabyrinth");
+  assert.equal(labyrinth.macArtifactName, "labyrinth-v1.0.0-56947de9ea16-mac");
+  assert.deepEqual(labyrinth.candidateArtifactNames, release.candidateArtifactNames);
+});
+
 test("private release identities are strict", async () => {
   const base = {
     registryFile,

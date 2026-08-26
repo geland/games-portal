@@ -6,21 +6,27 @@ export const PRIVATE_REPOSITORIES = new Map([
   ["butts", "geland/butts"],
   ["blend-in", "geland/blend-in"],
   ["web-dodge", "geland/motion-games"],
-  ["motion-tracker", "geland/motion-games"]
+  ["motion-tracker", "geland/motion-games"],
+  ["balloon", "geland/motion-games"],
+  ["labyrinth", "geland/motion-games"]
 ]);
 
 export const PRIVATE_PROFILES = new Map([
   ["butts", ["web", "web+mac"]],
   ["blend-in", ["mac"]],
   ["web-dodge", ["web"]],
-  ["motion-tracker", ["web"]]
+  ["motion-tracker", ["web"]],
+  ["balloon", ["mac"]],
+  ["labyrinth", ["mac"]]
 ]);
 
 const PRIVATE_WORKFLOWS = new Map([
   ["butts", { path: ".github/workflows/release.yml", name: "Build game release candidate", packageStyle: "standard" }],
   ["blend-in", { path: ".github/workflows/release.yml", name: "Build game release candidate", packageStyle: "standard" }],
   ["web-dodge", { path: ".github/workflows/static-release-candidates.yml", name: null, packageStyle: "motion-static" }],
-  ["motion-tracker", { path: ".github/workflows/static-release-candidates.yml", name: null, packageStyle: "motion-static" }]
+  ["motion-tracker", { path: ".github/workflows/static-release-candidates.yml", name: null, packageStyle: "motion-static" }],
+  ["balloon", { path: ".github/workflows/native-release-candidates.yml", name: null, packageStyle: "motion-native" }],
+  ["labyrinth", { path: ".github/workflows/native-release-candidates.yml", name: null, packageStyle: "motion-native" }]
 ]);
 
 const PROFILE_TARGETS = new Map([
@@ -110,10 +116,20 @@ export async function resolvePrivateRelease({ registryFile, gameId, sourceSha, v
     macArtifactName = "";
     macPackageFilename = "";
     candidateArtifactNames = [motionStem("web-dodge"), motionStem("motion-tracker")];
+  } else if (workflow.packageStyle === "motion-native") {
+    const sourceAbbreviation = sourceSha.slice(0, 12);
+    const motionStem = (slug) => `${slug}-${version}-${sourceAbbreviation}-mac`;
+    webArtifactName = "";
+    webPackageFilename = "";
+    macArtifactName = motionStem(config.slug);
+    macPackageFilename = `${macArtifactName}.gpkg`;
+    candidateArtifactNames = [motionStem("balloon"), motionStem("labyrinth")];
   }
   const sourceWorkflowName = workflow.packageStyle === "motion-static"
     ? `Static candidates from ${version} (push)`
-    : workflow.name;
+    : workflow.packageStyle === "motion-native"
+      ? `Native candidates from ${version} (push)`
+      : workflow.name;
 
   return {
     gameId,

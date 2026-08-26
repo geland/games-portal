@@ -10,6 +10,7 @@ const releaseDocs = await readFile(path.join(portalRoot, "release/public-games/R
 const credentialDocs = await readFile(path.join(portalRoot, "docs/ci-credentials.md"), "utf8");
 const privateCandidateWorkflow = await readFile(path.join(portalRoot, "templates/game-repo/.github/workflows/release.yml"), "utf8");
 const portalDeployWorkflow = await readFile(path.join(portalRoot, ".github/workflows/deploy.yml"), "utf8");
+const catalog = await readFile(path.join(portalRoot, "public/index.html"), "utf8");
 
 function job(name, nextName = null) {
   const start = workflow.indexOf(`  ${name}:\n`);
@@ -43,12 +44,12 @@ test("workflow refuses non-main or mismatched workflow commits as defense in dep
   assert.match(authorize, /test "\$\{EVENT_SHA\}" = "\$\{EXPECTED_PORTAL_SHA\}"/);
 });
 
-test("documentation requires external protected-main review controls", () => {
+test("documentation requires protected main and records the approved single-operator model", () => {
   for (const docs of [releaseDocs, credentialDocs]) {
     assert.match(docs, /\*\*MUST\*\* protect/);
     assert.match(docs, /selected branch `main` only/);
-    assert.match(docs, /require(?:d)?\s+(?:a |at least one )?reviewer/i);
-    assert.match(docs, /prevent self-review/i);
+    assert.match(docs, /owner explicitly approved single-operator[\s\S]+releases/i);
+    assert.match(docs, /without an independent[\s\S]+GitHub environment reviewer/i);
     assert.match(docs, /defense in depth/i);
     assert.match(docs, /do not\s+prove|cannot\s+prove/i);
   }
@@ -100,4 +101,9 @@ test("production job never checks out or runs public source", () => {
   assert.equal((publish.match(/artifact-container-cli\.mjs" unpack/g) ?? []).length, 2);
   assert.ok(publish.indexOf("artifact-container-cli.mjs\" unpack") < publish.indexOf("APPLE_DEVELOPER_ID_P12_BASE64"));
   assert.ok(publish.indexOf("sign-notarize-macos.sh") < publish.indexOf("publish-release.mjs"));
+});
+
+test("catalog retains both enabled Astro Bro targets", () => {
+  assert.match(catalog, /href="\/play\/astro-bro"/);
+  assert.match(catalog, /href="\/download\/astro-bro\/mac"/);
 });

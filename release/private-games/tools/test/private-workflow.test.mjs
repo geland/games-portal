@@ -9,6 +9,7 @@ const workflow = await readFile(path.join(portalRoot, ".github/workflows/release
 const candidate = await readFile(path.join(portalRoot, "templates/game-repo/.github/workflows/release.yml"), "utf8");
 const releaseDocs = await readFile(path.join(portalRoot, "release/private-games/README.md"), "utf8");
 const runVerifier = await readFile(path.join(portalRoot, "release/private-games/tools/private-run-cli.mjs"), "utf8");
+const catalog = await readFile(path.join(portalRoot, "public/index.html"), "utf8");
 
 function job(name, nextName = null) {
   const start = workflow.indexOf(`  ${name}:\n`);
@@ -22,7 +23,9 @@ test("private publication is manual-only and repository choices are fixed", () =
   const trigger = workflow.slice(workflow.indexOf("on:\n"), workflow.indexOf("permissions:\n"));
   assert.match(trigger, /workflow_dispatch:/);
   assert.doesNotMatch(trigger, /\bpush:|pull_request:|schedule:/);
-  for (const game of ["butts", "blend-in", "web-dodge", "motion-tracker"]) assert.match(trigger, new RegExp(`^          - ${game}$`, "m"));
+  const gameInput = trigger.slice(trigger.indexOf("      game:\n"), trigger.indexOf("      source_sha:\n"));
+  const choices = [...gameInput.matchAll(/^          - (.+)$/gm)].map((match) => match[1]);
+  assert.deepEqual(choices, ["butts", "blend-in", "web-dodge", "motion-tracker", "balloon", "labyrinth"]);
   assert.doesNotMatch(trigger, /^          - commanders$/m);
   assert.doesNotMatch(trigger, /repository:/);
 });
@@ -70,11 +73,17 @@ test("source candidate packages data with no production credential path", () => 
   assert.doesNotMatch(candidate, /environment:|\$\{\{\s*secrets\.|R2_ACCESS_KEY|APPLE_DEVELOPER_ID|sign-notarize-macos|publish-release\.mjs/);
 });
 
-test("documentation makes exact tag provenance and external protection mandatory", () => {
+test("documentation makes exact tag provenance and approved single-operator controls explicit", () => {
   assert.match(releaseDocs, /ineligible for publication/);
   assert.match(releaseDocs, /exact\s+`vMAJOR\.MINOR\.PATCH`\s+tag/);
-  assert.match(releaseDocs, /must remain main-only/i);
-  assert.match(releaseDocs, /reviewer other than the dispatcher/i);
-  assert.match(releaseDocs, /prevent self-review/i);
-  assert.match(releaseDocs, /disallow bypass/i);
+  assert.match(releaseDocs, /must remain restricted to `main`/i);
+  assert.match(releaseDocs, /owner explicitly approved single-operator[\s\S]+releases/i);
+  assert.match(releaseDocs, /without an independent[\s\S]+GitHub environment reviewer/i);
+  assert.match(releaseDocs, /does not relax[\s\S]+exact-tag\/SHA checks/i);
+});
+
+test("catalog links eligible native Motion downloads and no held game release", () => {
+  assert.match(catalog, /href="\/download\/balloon\/mac"/);
+  assert.match(catalog, /href="\/download\/labyrinth\/mac"/);
+  assert.doesNotMatch(catalog, /href="\/(?:play|download)\/(?:commanders|tower-defense)(?:\/|\")/);
 });

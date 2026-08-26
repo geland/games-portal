@@ -13,6 +13,8 @@ on:
           - blend-in
           - web-dodge
           - motion-tracker
+          - balloon
+          - labyrinth
       source_sha:
         description: Exact lowercase 40-character source commit SHA
         required: true

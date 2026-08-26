@@ -64,8 +64,10 @@ The main-ref and workflow-SHA checks in YAML are defense in depth; they do not
 prove GitHub branch or environment protection. Before any central release
 secret is stored, the repository **MUST** protect `main` and the
 `game-release-production` environment **MUST** allow deployment from
-selected branch `main` only, require at least one reviewer, prevent self-review, and
-disallow administrator bypass.
+selected branch `main` only. The owner explicitly approved single-operator
+releases without an independent GitHub environment reviewer on 2026-08-25.
+Manual dispatch, exact source identity, fresh-runner isolation, and separate
+least-privilege credentials remain required.
 
 ## macOS release jobs
 

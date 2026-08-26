@@ -5,7 +5,8 @@ const DIGEST_RE = /^sha256:[0-9a-f]{64}$/;
 const MAX_ARTIFACT_BYTES = 5 * 1024 * 1024 * 1024;
 const APPROVED_WORKFLOWS = new Map([
   [".github/workflows/release.yml", () => "Build game release candidate"],
-  [".github/workflows/static-release-candidates.yml", (version) => `Static candidates from ${version} (push)`]
+  [".github/workflows/static-release-candidates.yml", (version) => `Static candidates from ${version} (push)`],
+  [".github/workflows/native-release-candidates.yml", (version) => `Native candidates from ${version} (push)`]
 ]);
 
 function object(value, label) {

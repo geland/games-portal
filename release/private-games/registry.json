@@ -24,6 +24,18 @@
       "config": "release/private-games/configs/motion-tracker.json",
       "bundleIdentifier": "com.gregeland.motiontracker",
       "profiles": ["web"]
+    },
+    "balloon": {
+      "repository": "geland/motion-games",
+      "config": "release/private-games/configs/balloon.json",
+      "bundleIdentifier": "com.gregeland.motionballoon",
+      "profiles": ["mac"]
+    },
+    "labyrinth": {
+      "repository": "geland/motion-games",
+      "config": "release/private-games/configs/labyrinth.json",
+      "bundleIdentifier": "com.gregeland.motionlabyrinth",
+      "profiles": ["mac"]
     }
   }
 }

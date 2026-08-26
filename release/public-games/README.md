@@ -23,8 +23,9 @@ directories, verifies both exact commits, stages disposable project copies,
 and builds Web and unsigned universal Mac outputs. Astro Bro receives a
 trusted, single-threaded Compatibility Web preset in the disposable stage
 because its selected public commit contains only a Mac preset.
-The trusted Mac stage replaces `com.local.*` bundle identifiers and version
-metadata without modifying the public repository.
+Astro Bro's same release also builds that committed `macOS` preset as
+`Astro Bro.app`. The trusted Mac stage replaces `com.local.*` bundle
+identifiers and version metadata without modifying the public repository.
 
 The build job packages outputs into a constrained Gregeland container and
 uploads only those explicitly named package files. The container format stores
@@ -43,16 +44,18 @@ remains the final write.
 These workflow checks are defense in depth, not the production trust anchor.
 Before adding any release secret, the public portal repository **MUST** protect
 the `main` branch and configure the `game-release-production` environment to deploy from
-selected branch `main` only, require a reviewer, and prevent self-review. If the
-repository cannot enforce all of those controls, do not store the release
-secrets or run this privileged workflow. Code in this repository cannot prove
-that those external GitHub settings are enabled.
+selected branch `main` only. The owner explicitly approved single-operator
+releases without an independent GitHub environment reviewer on 2026-08-25.
+That accepted risk does not relax manual dispatch, exact source identity,
+fresh-runner isolation, or separate least-privilege credentials. If the
+repository cannot enforce the branch and environment restrictions, do not
+store the release secrets or run this privileged workflow. Code in this
+repository cannot prove that those external GitHub settings are enabled.
 
-Astro Bro is Web-only until Apple signing is provisioned and a later immutable
-version enables its Mac target. Racing Maze is Mac-only until Apple signing is
-provisioned; Web additionally requires its separate compatibility/performance
-gate. A Web configuration does not replace physical Safari/controller/audio
-acceptance testing.
+Astro Bro is enabled for both Web and signed/notarized Mac releases. Racing
+Maze is Mac-only; Web additionally requires its separate
+compatibility/performance gate. A Web configuration does not replace physical
+Safari/controller/audio acceptance testing.
 
 Tower Defense is deliberately absent from the release allowlist while its
 publication hold is active. Its public repository may run credential-free
@@ -61,9 +64,9 @@ baseline is present on its public remote.
 
 ## Required protected environment
 
-After the protected-`main`, main-only deployment branch, required-reviewer, and
-no-self-review controls above are enabled, configure the
-`game-release-production` environment on this public repository with:
+After the protected-`main` and main-only deployment-branch controls above are
+enabled, configure the `game-release-production` environment on this public
+repository with:
 
 ```text
 CLOUDFLARE_ACCOUNT_ID

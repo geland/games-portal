@@ -1,16 +1,16 @@
 {
-  "slug": "astro-bro",
+  "slug": "balloon",
   "projectPath": ".",
   "godotVersion": "4.6.2",
   "web": {
-    "enabled": true,
-    "preset": "Gregeland Web",
+    "enabled": false,
+    "preset": "Web",
     "entry": "index.html"
   },
   "mac": {
     "enabled": true,
     "preset": "macOS",
-    "bundleName": "Astro Bro",
+    "bundleName": "Motion Balloon",
     "entitlements": null
   }
 }

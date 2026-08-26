@@ -39,7 +39,6 @@ procedure. Resume never overwrites immutable content.
 
 - `astro-bro`
 - `butts`
-- `tower-defense`
 - `racing-maze`
 - `blend-in`
 - `web-dodge`
@@ -93,6 +92,13 @@ root.
 The hosted tracker is published as the independent Web slug
 `motion-tracker`; `/tracker` resolves that slug's ordinary Web target. This
 keeps the stable-manifest schema limited to `web` and `mac`.
+
+The Motion Balloon and Motion Labyrinth Mac candidates are produced together
+from one exact-tag `geland/motion-games` native workflow run. Their artifact
+names are respectively `<slug>-<version>-<source-sha12>-mac`, with matching
+`.gpkg` filenames. Central verification requires both same-run artifacts and
+then selects only the requested slug for trusted unpacking, signing,
+notarization, and publication.
 
 ## Publish order
 

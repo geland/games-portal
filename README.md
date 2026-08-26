@@ -61,11 +61,13 @@ The protected private-source handoff is documented in
 [`release/private-games`](release/private-games/README.md). A manually built
 candidate is validation evidence only; centrally publishable provenance
 requires the exact semantic-version tag run recorded by GitHub.
+The shared Motion repository has separate exact-tag workflows for its static
+browser pair and its native Balloon/Labyrinth pair; central verification
+requires the complete same-run pair before selecting one package to publish.
 
 Do not copy privileged credentials into any game repository. Public-source
 release configuration and its trust-boundary details
 live in [`release/public-games`](release/public-games/README.md); only
 credential-free validation belongs with the public source. Production release
 secrets require protected `main`, a main-only `game-release-production`
-environment, required review, and prevention of self-review as documented
-there.
+environment, and the single-operator risk controls documented there.

@@ -159,3 +159,50 @@ test("a shared Motion run must contain both exact packages while selecting one",
     macArtifactName: ""
   }), /unexpected artifact count/);
 });
+
+test("a shared native Motion run requires both same-run Mac packages while selecting one", () => {
+  const shortSha = sourceSha.slice(0, 12);
+  const balloon = `balloon-${version}-${shortSha}-mac`;
+  const labyrinth = `labyrinth-${version}-${shortSha}-mac`;
+  const motionRun = run({
+    repository: { full_name: "geland/motion-games" },
+    name: `Native candidates from ${version} (push)`,
+    path: ".github/workflows/native-release-candidates.yml"
+  });
+  assert.equal(validateCandidateRun(motionRun, {
+    repository: "geland/motion-games",
+    runId,
+    sourceSha,
+    version,
+    workflow: ".github/workflows/native-release-candidates.yml",
+    workflowName: `Native candidates from ${version} (push)`
+  }).path, ".github/workflows/native-release-candidates.yml");
+
+  const expected = {
+    runId,
+    sourceSha,
+    candidateArtifactNames: [balloon, labyrinth],
+    candidateWebEnabled: false,
+    candidateMacEnabled: true,
+    webArtifactName: "",
+    macArtifactName: balloon
+  };
+  const selected = selectCandidateArtifacts({
+    total_count: 2,
+    artifacts: [artifact(30, balloon), artifact(31, labyrinth)]
+  }, expected);
+  assert.equal(selected.web, null);
+  assert.equal(selected.mac.id, 30);
+
+  assert.throws(() => selectCandidateArtifacts({
+    total_count: 2,
+    artifacts: [
+      artifact(30, balloon),
+      artifact(31, labyrinth, { workflow_run: { id: runId, head_sha: "d".repeat(40) } })
+    ]
+  }, expected), /identity/);
+  assert.throws(() => selectCandidateArtifacts({
+    total_count: 1,
+    artifacts: [artifact(30, balloon)]
+  }, expected), /unexpected artifact count/);
+});
