@@ -4,7 +4,8 @@ import { isSafeRelativePath, loadConfig, setPresetOption, SHA_RE, VERSION_RE } f
 
 export const PUBLIC_REPOSITORIES = new Map([
   ["astro-bro", "judaheland-dev/astrobro"],
-  ["racing-maze", "judaheland-dev/race-maze"]
+  ["racing-maze", "judaheland-dev/race-maze"],
+  ["tower-defense", "judaheland-dev/tower-defense"]
 ]);
 
 const REPOSITORY_RE = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
@@ -149,7 +150,7 @@ dedicated_server=false
 custom_features=""
 export_filter="all_resources"
 include_filter=""
-exclude_filter=".godot/**,**/.DS_Store,addons/godot_ai/**,build/**"
+exclude_filter=".godot/**,**/.DS_Store,addons/godot_ai/**,build/**,tests/**"
 export_path="build/web/index.html"
 patches=PackedStringArray()
 patch_delta_encoding=false

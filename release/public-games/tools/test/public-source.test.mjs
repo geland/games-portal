@@ -12,7 +12,8 @@ const registryFile = path.join(portalRoot, "release/public-games/registry.json")
 test("public releases use the exact currently releasable repository allowlist", async () => {
   assert.deepEqual([...PUBLIC_REPOSITORIES], [
     ["astro-bro", "judaheland-dev/astrobro"],
-    ["racing-maze", "judaheland-dev/race-maze"]
+    ["racing-maze", "judaheland-dev/race-maze"],
+    ["tower-defense", "judaheland-dev/tower-defense"]
   ]);
   const release = await resolvePublicRelease({
     registryFile,
@@ -27,6 +28,18 @@ test("public releases use the exact currently releasable repository allowlist", 
   assert.equal(release.macEnabled, true);
   assert.equal(release.macPreset, "macOS");
   assert.equal(release.macBundleName, "Astro Bro");
+  const towerDefense = await resolvePublicRelease({
+    registryFile,
+    gameId: "tower-defense",
+    sourceSha: "b".repeat(40),
+    version: "v1.0.0",
+    resume: "false"
+  });
+  assert.equal(towerDefense.repository, "judaheland-dev/tower-defense");
+  assert.equal(towerDefense.bundleIdentifier, "com.gregeland.towerdefense");
+  assert.equal(towerDefense.webEnabled, true);
+  assert.equal(towerDefense.macEnabled, true);
+  assert.equal(towerDefense.macBundleName, "Tower Defense PVP");
   await assert.rejects(resolvePublicRelease({
     registryFile, gameId: "other", sourceSha: "a".repeat(40), version: "v1.2.3", resume: "false"
   }), /allowlist/);
@@ -64,6 +77,7 @@ test("trusted Web staging replaces public presets and forces Compatibility", asy
   assert.match(projectText, /renderer\/rendering_method\.mobile="gl_compatibility"/);
   assert.match(presets, /name="Gregeland Web"/);
   assert.match(presets, /variant\/thread_support=false/);
+  assert.match(presets, /tests\/\*\*/);
   assert.doesNotMatch(presets, /Untrusted Web|thread_support=true/);
 });
 

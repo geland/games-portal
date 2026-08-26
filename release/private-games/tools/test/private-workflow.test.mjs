@@ -82,8 +82,8 @@ test("documentation makes exact tag provenance and approved single-operator cont
   assert.match(releaseDocs, /does not relax[\s\S]+exact-tag\/SHA checks/i);
 });
 
-test("catalog links eligible native Motion downloads and no held game release", () => {
+test("catalog links eligible native Motion downloads and no held Commanders release", () => {
   assert.match(catalog, /href="\/download\/balloon\/mac"/);
   assert.match(catalog, /href="\/download\/labyrinth\/mac"/);
-  assert.doesNotMatch(catalog, /href="\/(?:play|download)\/(?:commanders|tower-defense)(?:\/|\")/);
+  assert.doesNotMatch(catalog, /href="\/(?:play|download)\/commanders(?:\/|\")/);
 });
