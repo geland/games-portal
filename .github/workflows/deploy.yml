@@ -45,7 +45,13 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci --ignore-scripts --no-audit
-      - run: npx wrangler deploy
+      - name: Upload Worker version
+        run: npx wrangler deploy --tag "$GITHUB_SHA"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      - name: Promote Worker version
+        run: npx wrangler versions deploy --version-tag "$GITHUB_SHA" --percentage 100 --yes --message "Deploy $GITHUB_SHA"
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
