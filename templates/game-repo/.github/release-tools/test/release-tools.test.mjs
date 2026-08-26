@@ -4,7 +4,7 @@ import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 import { assertProjectReleaseReady, buildManifest, contentTypeFor, createScopedR2Credentials, disablePresetSigning, isSafeMacExecutableName, patchMacReleaseVersion, planImmutableUploads, sanitizeStagedProjectText, validateConfig, VERSION_RE } from "../lib.mjs";
-import { PUBLIC_ORIGIN_USER_AGENT, assertReleaseManifestSize, assertUncachedOriginResponse, assertVersionIndexSize, buildCacheProbeKeys, compareReleaseVersions, decideReleasePreflight, publicOriginResponseDiagnostics, validateImmutableManifest, validateVersionIndex } from "../publish-release.mjs";
+import { PUBLIC_ORIGIN_USER_AGENT, assertReleaseManifestSize, assertUncachedOriginResponse, assertVersionIndexSize, buildCacheProbeKeys, compareReleaseVersions, decideReleasePreflight, parseOriginProbeResponse, publicOriginResponseDiagnostics, validateImmutableManifest, validateVersionIndex } from "../publish-release.mjs";
 
 const config = {
   slug: "astro-bro",
@@ -204,6 +204,17 @@ test("public-origin checks identify the release publisher", () => {
     "cf-mitigated": "challenge",
     "authorization": "must-not-appear"
   })), "cf-ray=abc-SEA, cf-mitigated=challenge");
+  const response = parseOriginProbeResponse(new Response(null, {
+    status: 204,
+    headers: {
+      "x-gregeland-origin-status": "404",
+      "x-gregeland-origin-cf-cache-status": "BYPASS",
+      "x-gregeland-origin-age": "1"
+    }
+  }), "downloads/game/v1.0.0/probe.zip");
+  assert.equal(response.status, 404);
+  assert.equal(response.headers.get("cf-cache-status"), "BYPASS");
+  assert.equal(response.headers.get("age"), "1");
 });
 
 test("ordinary releases must advance beyond every stable or indexed version", () => {

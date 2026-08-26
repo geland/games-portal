@@ -41,6 +41,10 @@ export async function main() {
   const accountId = required("CLOUDFLARE_ACCOUNT_ID");
   bucket = required("R2_BUCKET");
   const publicBase = new URL(required("R2_PUBLIC_BASE"));
+  const originProbe = createOriginProbeClient(
+    required("RELEASE_ORIGIN_PROBE_URL"),
+    required("RELEASE_ORIGIN_PROBE_TOKEN")
+  );
   const allowResume = process.env.ALLOW_RESUME === "true";
   if (process.env.ALLOW_RESUME && !["true", "false"].includes(process.env.ALLOW_RESUME)) {
     throw new Error("ALLOW_RESUME must be true or false");
@@ -127,7 +131,7 @@ export async function main() {
   if (authoritativeManifest) assertReleaseManifestSize(authoritativeManifest);
 
   const artifactDescriptors = authoritativeManifest?.files ?? files;
-  await verifyPublicOriginIsUncached(publicBase, artifactDescriptors);
+  await verifyPublicOriginIsUncached(originProbe, artifactDescriptors);
   const existingArtifactKeys = new Set();
   for (const file of artifactDescriptors) {
     if (await objectExists(file.key)) existingArtifactKeys.add(file.key);
@@ -159,7 +163,7 @@ export async function main() {
       await verifyRemoteFile(file);
     }
     manifest = authoritativeManifest;
-    await verifyPublicFiles(publicBase, manifest.files);
+    await verifyPublicFiles(originProbe, manifest.files);
   } else {
     const existingImmutableKeys = [...existingArtifactKeys];
     planImmutableUploads([...files.map((file) => file.key), versionManifestKey], new Set(existingImmutableKeys), allowResume);
@@ -171,7 +175,7 @@ export async function main() {
     }
     manifest = localManifest;
     await uploadImmutableJson(versionManifestKey, manifest);
-    await verifyPublicFiles(publicBase, files);
+    await verifyPublicFiles(originProbe, files);
   }
 
   await updateIndex(nextIndex, indexResult);
@@ -316,6 +320,51 @@ export function publicOriginResponseDiagnostics(headers) {
     .filter(([, value]) => value)
     .map(([name, value]) => `${name}=${value}`)
     .join(", ");
+}
+
+export function parseOriginProbeResponse(response, key) {
+  if (response.status !== 204) {
+    throw new Error(`release origin probe request failed: ${key} (${response.status})`);
+  }
+  const statusText = response.headers.get("x-gregeland-origin-status") ?? "";
+  if (!/^[1-5][0-9]{2}$/.test(statusText)) {
+    throw new Error(`release origin probe returned an invalid status: ${key}`);
+  }
+  const headers = new Headers();
+  for (const name of ["content-type", "content-length", "cf-cache-status", "age", "cf-ray", "cf-mitigated", "server"]) {
+    const value = response.headers.get(`x-gregeland-origin-${name}`);
+    if (value) headers.set(name, value);
+  }
+  const status = Number(statusText);
+  return { status, ok: status >= 200 && status < 300, headers };
+}
+
+export function createOriginProbeClient(rawUrl, token) {
+  const url = new URL(rawUrl);
+  if (url.origin !== "https://games-release-probe.geland.workers.dev"
+    || url.pathname !== "/v1/probe"
+    || url.search
+    || url.hash
+    || url.username
+    || url.password) {
+    throw new Error("RELEASE_ORIGIN_PROBE_URL does not match the trusted probe service");
+  }
+  if (token.length < 32 || token.length > 512) {
+    throw new Error("RELEASE_ORIGIN_PROBE_TOKEN is malformed");
+  }
+  return async (key) => {
+    const requestUrl = new URL(url);
+    requestUrl.searchParams.set("key", key);
+    const response = await fetch(requestUrl, {
+      method: "HEAD",
+      redirect: "error",
+      headers: {
+        authorization: `Bearer ${token}`,
+        "user-agent": PUBLIC_ORIGIN_USER_AGENT
+      }
+    });
+    return parseOriginProbeResponse(response, key);
+  };
 }
 
 export function buildCacheProbeKeys(files, requestedVersion, requestedSourceCommit) {
@@ -607,18 +656,14 @@ async function verifyJson(key, expected) {
   if (!actual.equals(expected)) throw new Error(`remote JSON verification failed: ${key}`);
 }
 
-async function verifyPublicFiles(publicBase, files) {
+async function verifyPublicFiles(originProbe, files) {
   for (const file of files) {
     const expectedType = file.contentType.split(";", 1)[0].toLowerCase();
     let lastStatus = "network error";
     for (const delay of [0, 500, 1_000, 2_000, 4_000, 8_000]) {
       if (delay) await new Promise((resolve) => setTimeout(resolve, delay));
       try {
-        const response = await fetch(new URL(`/${file.key}`, publicBase), {
-          method: "HEAD",
-          redirect: "error",
-          headers: { "user-agent": PUBLIC_ORIGIN_USER_AGENT }
-        });
+        const response = await originProbe(file.key);
         lastStatus = String(response.status);
         if (response.ok && response.headers.get("content-type")?.toLowerCase().startsWith(expectedType)) {
           lastStatus = "ok";
@@ -634,13 +679,9 @@ async function verifyPublicFiles(publicBase, files) {
   }
 }
 
-async function verifyPublicOriginIsUncached(publicBase, files) {
+async function verifyPublicOriginIsUncached(originProbe, files) {
   for (const key of buildCacheProbeKeys(files, version, sourceCommit)) {
-    const response = await fetch(new URL(`/${key}`, publicBase), {
-      method: "HEAD",
-      redirect: "error",
-      headers: { "user-agent": PUBLIC_ORIGIN_USER_AGENT }
-    });
+    const response = await originProbe(key);
     assertUncachedOriginResponse({
       key,
       status: response.status,

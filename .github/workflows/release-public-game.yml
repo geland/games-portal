@@ -396,6 +396,8 @@ jobs:
           GAME_SLUG: ${{ needs.authorize.outputs.slug }}
           R2_BUCKET: ${{ vars.R2_BUCKET }}
           R2_PUBLIC_BASE: ${{ vars.R2_PUBLIC_BASE }}
+          RELEASE_ORIGIN_PROBE_URL: ${{ vars.RELEASE_ORIGIN_PROBE_URL }}
+          RELEASE_ORIGIN_PROBE_TOKEN: ${{ secrets.RELEASE_ORIGIN_PROBE_TOKEN }}
           WEB_BUILD_DIR: ${{ runner.temp }}/gregeland-public-release/web
           MAC_ARCHIVE: ${{ runner.temp }}/gregeland-public-release/${{ needs.authorize.outputs.slug }}-macos-universal.zip
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
