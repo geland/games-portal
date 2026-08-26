@@ -4,7 +4,7 @@ import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 import { assertProjectReleaseReady, buildManifest, contentTypeFor, createScopedR2Credentials, disablePresetSigning, isSafeMacExecutableName, patchMacReleaseVersion, planImmutableUploads, sanitizeStagedProjectText, validateConfig, VERSION_RE } from "../lib.mjs";
-import { assertReleaseManifestSize, assertUncachedOriginResponse, assertVersionIndexSize, buildCacheProbeKeys, compareReleaseVersions, decideReleasePreflight, validateImmutableManifest, validateVersionIndex } from "../publish-release.mjs";
+import { PUBLIC_ORIGIN_USER_AGENT, assertReleaseManifestSize, assertUncachedOriginResponse, assertVersionIndexSize, buildCacheProbeKeys, compareReleaseVersions, decideReleasePreflight, validateImmutableManifest, validateVersionIndex } from "../publish-release.mjs";
 
 const config = {
   slug: "astro-bro",
@@ -195,6 +195,10 @@ test("public release probes fail closed if CDN caching can preserve a 404", () =
   assert.throws(() => buildCacheProbeKeys([
     { key: "releases/game/v1.0.0/web/.gregeland-cache-probe-collision.js" }
   ], "v1.0.0", sourceCommit), /reserved cache-probe namespace/);
+});
+
+test("public-origin checks identify the release publisher", () => {
+  assert.match(PUBLIC_ORIGIN_USER_AGENT, /^Gregeland-Games-Release-Publisher\/1\.0 /);
 });
 
 test("ordinary releases must advance beyond every stable or indexed version", () => {
