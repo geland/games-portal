@@ -299,14 +299,23 @@ export function assertVersionIndexSize(index) {
   return jsonBufferWithinLimit(index, REMOTE_JSON_MAX_BYTES, "version index");
 }
 
-export function assertUncachedOriginResponse({ key, status, cacheStatus, age }) {
+export function assertUncachedOriginResponse({ key, status, cacheStatus, age, diagnostics = "" }) {
   const normalized = typeof cacheStatus === "string" ? cacheStatus.toUpperCase() : "";
-  if (status !== 404) throw new Error(`public-origin cache probe was expected to be missing: ${key} (${status})`);
+  const detail = diagnostics ? `; ${diagnostics}` : "";
+  if (status !== 404) throw new Error(`public-origin cache probe was expected to be missing: ${key} (${status}${detail})`);
   if (!["DYNAMIC", "BYPASS"].includes(normalized) || age !== null) {
     throw new Error(
-      `public-origin caching is enabled or ambiguous for ${key}; keep the R2 origin uncached until a managed 404/410 zero-TTL rule and recovery policy are installed`
+      `public-origin caching is enabled or ambiguous for ${key}${detail}; keep the R2 origin uncached until a managed 404/410 zero-TTL rule and recovery policy are installed`
     );
   }
+}
+
+export function publicOriginResponseDiagnostics(headers) {
+  return ["cf-ray", "cf-mitigated", "server", "cf-cache-status"]
+    .map((name) => [name, headers.get(name)])
+    .filter(([, value]) => value)
+    .map(([name, value]) => `${name}=${value}`)
+    .join(", ");
 }
 
 export function buildCacheProbeKeys(files, requestedVersion, requestedSourceCommit) {
@@ -636,7 +645,8 @@ async function verifyPublicOriginIsUncached(publicBase, files) {
       key,
       status: response.status,
       cacheStatus: response.headers.get("cf-cache-status"),
-      age: response.headers.get("age")
+      age: response.headers.get("age"),
+      diagnostics: publicOriginResponseDiagnostics(response.headers)
     });
   }
 }
