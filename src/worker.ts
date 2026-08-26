@@ -20,6 +20,11 @@ type ReleaseManifest = {
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const VERSION_RE = /^v(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)$/;
 const SHA_RE = /^[0-9a-f]{40}$/;
+const EXTERNAL_WEB_GAMES: Readonly<Record<string, string>> = Object.freeze({
+  dognado: "https://judaheland-dev.github.io/dognado/",
+  "snake-arena": "https://judaheland-dev.github.io/snake-arena/",
+  woberia: "https://judaheland-dev.github.io/janes-game/"
+});
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
@@ -71,6 +76,11 @@ async function redirectToRelease(
     return textResponse("Unknown game", 404);
   }
 
+  const externalWebGame = target === "web" ? EXTERNAL_WEB_GAMES[slug] : undefined;
+  if (externalWebGame) {
+    return releaseRedirect(externalWebGame);
+  }
+
   const manifest = await readManifest(env, slug);
   if (!manifest || manifest.slug !== slug) {
     return textResponse("Release not found", 404);
@@ -94,11 +104,15 @@ async function redirectToRelease(
   }
 
   const publicBase = new URL(env.R2_PUBLIC_BASE);
+  return releaseRedirect(new URL(`/${path}`, publicBase).toString());
+}
+
+function releaseRedirect(location: string): Response {
   return new Response(null, {
     status: 302,
     headers: {
       "Cache-Control": "no-store",
-      Location: new URL(`/${path}`, publicBase).toString(),
+      Location: location,
       "Referrer-Policy": "no-referrer",
       "X-Content-Type-Options": "nosniff"
     }
