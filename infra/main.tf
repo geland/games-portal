@@ -49,10 +49,12 @@ resource "cloudflare_r2_custom_domain" "game_releases" {
   min_tls     = "1.2"
 }
 
-# Edge caching for play.games.gregeland.com is intentionally not enabled. The
-# release publisher fails closed unless reserved missing artifact-type probes
-# are DYNAMIC or BYPASS. Before adding a cache ruleset, inventory/import the zone's existing
-# rules and set 404/410 edge TTL to zero so a cached miss cannot hide a newly
+# A zone cache rule configured outside this Terraform state caches successful
+# play.games.gregeland.com responses while explicitly bypassing 300-599. Do not
+# add or import a cloudflare_ruleset here without first inventorying the entire
+# existing phase ruleset: that resource owns the phase and an incomplete apply
+# could remove unrelated rules. Release preflight requires a missing probe to
+# remain 404 with DYNAMIC/BYPASS and no Age so a cached miss cannot hide a newly
 # uploaded immutable release.
 
 resource "cloudflare_workers_custom_domain" "catalog" {
