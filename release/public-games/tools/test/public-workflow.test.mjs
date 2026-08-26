@@ -66,10 +66,13 @@ test("public source build job has no environment or production secret references
   assert.doesNotMatch(build, /\$\{\{\s*secrets\.|APPLE_|R2_ACCESS_KEY|R2_SECRET|CLOUDFLARE_ACCOUNT_ID/);
 });
 
-test("central-only tooling is not embedded in the reusable private-game template", async () => {
+test("private template contains only unprivileged packaging, not central source or publication authority", async () => {
   const templateTools = path.join(portalRoot, "templates/game-repo/.github/release-tools");
-  for (const name of ["public-source.mjs", "public-source-cli.mjs", "artifact-container.mjs", "artifact-container-cli.mjs"]) {
+  for (const name of ["public-source.mjs", "public-source-cli.mjs", "private-source.mjs", "private-run.mjs"] ) {
     await assert.rejects(readFile(path.join(templateTools, name)), /ENOENT/);
+  }
+  for (const name of ["artifact-container.mjs", "artifact-container-cli.mjs"]) {
+    assert.ok((await readFile(path.join(templateTools, name), "utf8")).length > 0);
   }
 });
 

@@ -1,0 +1,280 @@
+name: Publish approved private-source game
+run-name: ${{ inputs.game }} ${{ inputs.version }} (${{ inputs.release_profile }}) from run ${{ inputs.build_run_id }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      game:
+        description: Approved private game
+        required: true
+        type: choice
+        options:
+          - butts
+          - blend-in
+      source_sha:
+        description: Exact lowercase 40-character source commit SHA
+        required: true
+        type: string
+      version:
+        description: Exact immutable version tag (vMAJOR.MINOR.PATCH)
+        required: true
+        type: string
+      release_profile:
+        description: Approved targets frozen into this version
+        required: true
+        type: choice
+        options:
+          - web
+          - mac
+          - web+mac
+      build_run_id:
+        description: Successful tag-triggered candidate workflow run ID
+        required: true
+        type: string
+      resume_existing:
+        description: Resume only after verifying every existing immutable byte
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: private-game-release-${{ inputs.game }}
+  cancel-in-progress: false
+
+jobs:
+  authorize:
+    name: Resolve fixed private source
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    outputs:
+      game_id: ${{ steps.release.outputs.game_id }}
+      source_repository: ${{ steps.release.outputs.source_repository }}
+      source_workflow: ${{ steps.release.outputs.source_workflow }}
+      source_sha: ${{ steps.release.outputs.source_sha }}
+      version: ${{ steps.release.outputs.version }}
+      profile: ${{ steps.release.outputs.profile }}
+      build_run_id: ${{ steps.release.outputs.build_run_id }}
+      resume: ${{ steps.release.outputs.resume }}
+      config_path: ${{ steps.release.outputs.config_path }}
+      slug: ${{ steps.release.outputs.slug }}
+      web_enabled: ${{ steps.release.outputs.web_enabled }}
+      web_entry: ${{ steps.release.outputs.web_entry }}
+      mac_enabled: ${{ steps.release.outputs.mac_enabled }}
+      mac_bundle_name: ${{ steps.release.outputs.mac_bundle_name }}
+      mac_entitlements: ${{ steps.release.outputs.mac_entitlements }}
+      bundle_identifier: ${{ steps.release.outputs.bundle_identifier }}
+      candidate_web_enabled: ${{ steps.release.outputs.candidate_web_enabled }}
+      candidate_mac_enabled: ${{ steps.release.outputs.candidate_mac_enabled }}
+      web_artifact_name: ${{ steps.release.outputs.web_artifact_name }}
+      mac_artifact_name: ${{ steps.release.outputs.mac_artifact_name }}
+    steps:
+      - name: Check out the trusted portal commit
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          ref: ${{ github.workflow_sha }}
+          path: trusted
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Require the protected main workflow identity
+        env:
+          EVENT_REF: ${{ github.ref }}
+          EVENT_SHA: ${{ github.sha }}
+          EXPECTED_PORTAL_SHA: ${{ github.workflow_sha }}
+          WORKFLOW_REF: ${{ github.workflow_ref }}
+          EXPECTED_WORKFLOW_REF: ${{ github.repository }}/.github/workflows/release-private-game.yml@refs/heads/main
+        run: |
+          test "${EVENT_REF}" = "refs/heads/main"
+          test "${WORKFLOW_REF}" = "${EXPECTED_WORKFLOW_REF}"
+          test "${EVENT_SHA}" = "${EXPECTED_PORTAL_SHA}"
+          test "$(git -C trusted rev-parse HEAD)" = "${EXPECTED_PORTAL_SHA}"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+
+      - name: Resolve and validate the approved release identity
+        id: release
+        env:
+          PRIVATE_GAME_REGISTRY: ${{ github.workspace }}/trusted/release/private-games/registry.json
+          SELECTED_GAME: ${{ inputs.game }}
+          SOURCE_SHA: ${{ inputs.source_sha }}
+          RELEASE_VERSION: ${{ inputs.version }}
+          RELEASE_PROFILE: ${{ inputs.release_profile }}
+          BUILD_RUN_ID: ${{ inputs.build_run_id }}
+          RESUME_EXISTING: ${{ inputs.resume_existing }}
+        run: node trusted/release/private-games/tools/private-source-cli.mjs resolve
+
+  verify-sign-publish:
+    name: Verify, sign, and publish candidate data
+    needs: authorize
+    runs-on: macos-15
+    timeout-minutes: 90
+    permissions:
+      contents: read
+    environment:
+      name: game-release-production
+      url: https://games.gregeland.com
+    env:
+      RELEASE_TOOL_ROOT: ${{ github.workspace }}/trusted/templates/game-repo/.github/release-tools
+      PACKAGE_TOOL_ROOT: ${{ github.workspace }}/trusted/release/public-games/tools
+      PRIVATE_TOOL_ROOT: ${{ github.workspace }}/trusted/release/private-games/tools
+      RELEASE_SCRIPT_ROOT: ${{ github.workspace }}/trusted/templates/game-repo/.github/scripts
+      PRIVATE_GAME_REGISTRY: ${{ github.workspace }}/trusted/release/private-games/registry.json
+      EFFECTIVE_RELEASE_CONFIG: ${{ github.workspace }}/.private-release/effective-config.json
+    steps:
+      - name: Check out only the trusted portal commit
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          ref: ${{ github.workflow_sha }}
+          path: trusted
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Verify the trusted protected-main identity
+        env:
+          EVENT_REF: ${{ github.ref }}
+          EVENT_SHA: ${{ github.sha }}
+          EXPECTED_PORTAL_SHA: ${{ github.workflow_sha }}
+        run: |
+          test "${EVENT_REF}" = "refs/heads/main"
+          test "${EVENT_SHA}" = "${EXPECTED_PORTAL_SHA}"
+          test "$(git -C trusted rev-parse HEAD)" = "${EXPECTED_PORTAL_SHA}"
+          test ! -e private-source
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            trusted/templates/game-repo/.github/release-tools/package-lock.json
+            trusted/release/public-games/tools/package-lock.json
+            trusted/release/private-games/tools/package-lock.json
+
+      - name: Install and test trusted release tooling
+        run: |
+          npm ci --prefix "${RELEASE_TOOL_ROOT}" --ignore-scripts --no-audit
+          npm test --prefix "${RELEASE_TOOL_ROOT}"
+          npm ci --prefix "${PACKAGE_TOOL_ROOT}" --ignore-scripts --no-audit
+          npm test --prefix "${PACKAGE_TOOL_ROOT}"
+          npm ci --prefix "${PRIVATE_TOOL_ROOT}" --ignore-scripts --no-audit
+          npm test --prefix "${PRIVATE_TOOL_ROOT}"
+
+      - name: Freeze the approved targets into an effective configuration
+        env:
+          SELECTED_GAME: ${{ needs.authorize.outputs.game_id }}
+          SOURCE_SHA: ${{ needs.authorize.outputs.source_sha }}
+          RELEASE_VERSION: ${{ needs.authorize.outputs.version }}
+          RELEASE_PROFILE: ${{ needs.authorize.outputs.profile }}
+          BUILD_RUN_ID: ${{ needs.authorize.outputs.build_run_id }}
+          RESUME_EXISTING: ${{ needs.authorize.outputs.resume }}
+          EFFECTIVE_CONFIG_OUTPUT: ${{ env.EFFECTIVE_RELEASE_CONFIG }}
+        run: node "${PRIVATE_TOOL_ROOT}/private-source-cli.mjs" write-effective-config
+
+      - name: Verify the private candidate run and complete artifact set
+        id: candidate
+        env:
+          SOURCE_REPOSITORY: ${{ needs.authorize.outputs.source_repository }}
+          SOURCE_WORKFLOW: ${{ needs.authorize.outputs.source_workflow }}
+          SOURCE_SHA: ${{ needs.authorize.outputs.source_sha }}
+          RELEASE_VERSION: ${{ needs.authorize.outputs.version }}
+          BUILD_RUN_ID: ${{ needs.authorize.outputs.build_run_id }}
+          CANDIDATE_WEB_ENABLED: ${{ needs.authorize.outputs.candidate_web_enabled }}
+          CANDIDATE_MAC_ENABLED: ${{ needs.authorize.outputs.candidate_mac_enabled }}
+          WEB_ARTIFACT_NAME: ${{ needs.authorize.outputs.web_artifact_name }}
+          MAC_ARTIFACT_NAME: ${{ needs.authorize.outputs.mac_artifact_name }}
+          PRIVATE_ACTIONS_READ_TOKEN: ${{ secrets.PRIVATE_ACTIONS_READ_TOKEN }}
+        run: node "${PRIVATE_TOOL_ROOT}/private-run-cli.mjs" verify
+
+      - name: Download the exact Web data package
+        if: needs.authorize.outputs.web_enabled == 'true'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          artifact-ids: ${{ steps.candidate.outputs.web_artifact_id }}
+          path: ${{ runner.temp }}/gregeland-private-download/web
+          github-token: ${{ secrets.PRIVATE_ACTIONS_READ_TOKEN }}
+          repository: ${{ needs.authorize.outputs.source_repository }}
+          run-id: ${{ needs.authorize.outputs.build_run_id }}
+          merge-multiple: true
+          digest-mismatch: error
+
+      - name: Verify and unpack Web data without executing it
+        if: needs.authorize.outputs.web_enabled == 'true'
+        env:
+          ARTIFACT_KIND: web
+          ARTIFACT_PACKAGE: ${{ runner.temp }}/gregeland-private-download/web/${{ needs.authorize.outputs.slug }}-${{ needs.authorize.outputs.version }}-web.gpkg
+          ARTIFACT_OUTPUT: ${{ runner.temp }}/gregeland-private-release/web
+          GAME_SLUG: ${{ needs.authorize.outputs.slug }}
+          RELEASE_VERSION: ${{ needs.authorize.outputs.version }}
+          SOURCE_COMMIT: ${{ needs.authorize.outputs.source_sha }}
+          WEB_ENTRY: ${{ needs.authorize.outputs.web_entry }}
+        run: node "${PACKAGE_TOOL_ROOT}/artifact-container-cli.mjs" unpack
+
+      - name: Download the exact unsigned Mac data package
+        if: needs.authorize.outputs.mac_enabled == 'true'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          artifact-ids: ${{ steps.candidate.outputs.mac_artifact_id }}
+          path: ${{ runner.temp }}/gregeland-private-download/mac
+          github-token: ${{ secrets.PRIVATE_ACTIONS_READ_TOKEN }}
+          repository: ${{ needs.authorize.outputs.source_repository }}
+          run-id: ${{ needs.authorize.outputs.build_run_id }}
+          merge-multiple: true
+          digest-mismatch: error
+
+      - name: Verify and unpack the unsigned Mac app without executing it
+        if: needs.authorize.outputs.mac_enabled == 'true'
+        env:
+          ARTIFACT_KIND: mac
+          ARTIFACT_PACKAGE: ${{ runner.temp }}/gregeland-private-download/mac/${{ needs.authorize.outputs.slug }}-${{ needs.authorize.outputs.version }}-mac.gpkg
+          ARTIFACT_OUTPUT: ${{ runner.temp }}/gregeland-private-release/macos
+          GAME_SLUG: ${{ needs.authorize.outputs.slug }}
+          RELEASE_VERSION: ${{ needs.authorize.outputs.version }}
+          SOURCE_COMMIT: ${{ needs.authorize.outputs.source_sha }}
+          MAC_BUNDLE_NAME: ${{ needs.authorize.outputs.mac_bundle_name }}
+        run: node "${PACKAGE_TOOL_ROOT}/artifact-container-cli.mjs" unpack
+
+      - name: Sign, notarize, staple, and archive the Mac app
+        if: needs.authorize.outputs.mac_enabled == 'true'
+        env:
+          MAC_APP: ${{ runner.temp }}/gregeland-private-release/macos/${{ needs.authorize.outputs.mac_bundle_name }}.app
+          MAC_ARCHIVE: ${{ runner.temp }}/gregeland-private-release/${{ needs.authorize.outputs.slug }}-macos-universal.zip
+          MAC_ENTITLEMENTS: ${{ needs.authorize.outputs.mac_entitlements == '' && '' || format('{0}/trusted/{1}', github.workspace, needs.authorize.outputs.mac_entitlements) }}
+          MAC_EXPECTED_BUNDLE_ID: ${{ needs.authorize.outputs.bundle_identifier }}
+          MAC_EXPECTED_VERSION: ${{ needs.authorize.outputs.version }}
+          APPLE_DEVELOPER_ID_P12_BASE64: ${{ secrets.APPLE_DEVELOPER_ID_P12_BASE64 }}
+          APPLE_DEVELOPER_ID_P12_PASSWORD: ${{ secrets.APPLE_DEVELOPER_ID_P12_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_NOTARY_KEY_P8_BASE64: ${{ secrets.APPLE_NOTARY_KEY_P8_BASE64 }}
+          APPLE_NOTARY_KEY_ID: ${{ secrets.APPLE_NOTARY_KEY_ID }}
+          APPLE_NOTARY_ISSUER_ID: ${{ secrets.APPLE_NOTARY_ISSUER_ID }}
+        run: bash "${RELEASE_SCRIPT_ROOT}/sign-notarize-macos.sh"
+
+      - name: Re-verify trusted release authority before publication
+        env:
+          EXPECTED_PORTAL_SHA: ${{ github.workflow_sha }}
+        run: |
+          test "$(git -C trusted rev-parse HEAD)" = "${EXPECTED_PORTAL_SHA}"
+          test -z "$(git -C trusted status --porcelain=v1 --untracked-files=all)"
+          test ! -e private-source
+
+      - name: Publish immutable objects and promote stable last
+        env:
+          RELEASE_CONFIG_FILE: ${{ env.EFFECTIVE_RELEASE_CONFIG }}
+          RELEASE_VERSION: ${{ needs.authorize.outputs.version }}
+          SOURCE_COMMIT: ${{ needs.authorize.outputs.source_sha }}
+          ALLOW_RESUME: ${{ needs.authorize.outputs.resume }}
+          GAME_SLUG: ${{ needs.authorize.outputs.slug }}
+          R2_BUCKET: ${{ vars.R2_BUCKET }}
+          R2_PUBLIC_BASE: ${{ vars.R2_PUBLIC_BASE }}
+          WEB_BUILD_DIR: ${{ runner.temp }}/gregeland-private-release/web
+          MAC_ARCHIVE: ${{ runner.temp }}/gregeland-private-release/${{ needs.authorize.outputs.slug }}-macos-universal.zip
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: node "${RELEASE_TOOL_ROOT}/publish-release.mjs"

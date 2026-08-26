@@ -42,7 +42,6 @@ procedure. Resume never overwrites immutable content.
 - `tower-defense`
 - `racing-maze`
 - `blend-in`
-- `commanders`
 - `web-dodge`
 - `motion-tracker`
 - `balloon`
@@ -98,8 +97,10 @@ keeps the stable-manifest schema limited to `web` and `mac`.
 ## Publish order
 
 1. Validate a `vMAJOR.MINOR.PATCH` version and build from its exact commit. The
-   central source workflow is manual-only; private game repositories may use an
-   exact tag or manual dispatch only to build an unsigned candidate.
+   central source workflows are manual-only. Private game repositories may use
+   an exact tag or manual dispatch to build an unsigned candidate, but only the
+   GitHub-recorded exact-tag run is eligible for central publication; manual
+   candidates are validation evidence only.
 2. Run automated tests and platform smoke checks.
 3. Sign, notarize, staple, and verify every Mac application.
 4. Upload Web and Mac artifacts to new version keys.

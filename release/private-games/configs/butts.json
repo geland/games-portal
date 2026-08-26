@@ -1,0 +1,16 @@
+{
+  "slug": "butts",
+  "projectPath": ".",
+  "godotVersion": "4.6.2",
+  "web": {
+    "enabled": true,
+    "preset": "Gregeland Web",
+    "entry": "index.html"
+  },
+  "mac": {
+    "enabled": true,
+    "preset": "macOS Preview",
+    "bundleName": "Butts",
+    "entitlements": null
+  }
+}

@@ -1,5 +1,8 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import test from "node:test";
+import { fileURLToPath } from "node:url";
 import { assertProjectReleaseReady, buildManifest, contentTypeFor, createScopedR2Credentials, disablePresetSigning, isSafeMacExecutableName, patchMacReleaseVersion, planImmutableUploads, sanitizeStagedProjectText, validateConfig, VERSION_RE } from "../lib.mjs";
 import { assertReleaseManifestSize, assertUncachedOriginResponse, assertVersionIndexSize, buildCacheProbeKeys, compareReleaseVersions, decideReleasePreflight, validateImmutableManifest, validateVersionIndex } from "../publish-release.mjs";
 
@@ -12,6 +15,7 @@ const config = {
 };
 const sourceCommit = "a".repeat(40);
 const publishedAt = "2026-08-25T12:00:00.000Z";
+const releaseToolRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 function releaseManifest(version = "v1.2.3") {
   const slug = "astro-bro";
@@ -57,6 +61,11 @@ test("Mac executable names allow safe spaces and reject unsafe path names", () =
   for (const value of [".", "..", "../Game", "Contents/MacOS/Game", "Game\\Helper", " Game", "Game\tHelper", "Game\nHelper", "Game\u007fHelper", ""]) {
     assert.equal(isSafeMacExecutableName(value), false);
   }
+});
+
+test("Mac signing requires the plist-named main executable to be executable", async () => {
+  const script = await readFile(path.resolve(releaseToolRoot, "../scripts/sign-notarize-macos.sh"), "utf8");
+  assert.match(script, /! -f .*Contents\/MacOS\/\$\{EXECUTABLE\}.*\|\| ! -x .*Contents\/MacOS\/\$\{EXECUTABLE\}/);
 });
 
 test("configuration is strict", () => {

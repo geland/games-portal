@@ -1,0 +1,73 @@
+import assert from "node:assert/strict";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
+import test from "node:test";
+import { fileURLToPath } from "node:url";
+import { resolvePrivateRelease, validatePrivateRegistry, writeEffectiveConfig } from "../private-source.mjs";
+
+const toolRoot = path.dirname(fileURLToPath(import.meta.url));
+const registryFile = path.resolve(toolRoot, "../../registry.json");
+const sha = "a".repeat(40);
+
+test("private releases resolve only fixed repositories and profiles", async () => {
+  const release = await resolvePrivateRelease({
+    registryFile,
+    gameId: "butts",
+    sourceSha: sha,
+    version: "v1.2.3",
+    profile: "web",
+    buildRunId: "32920663099",
+    resume: "false"
+  });
+  assert.equal(release.repository, "geland/butts");
+  assert.equal(release.webEnabled, true);
+  assert.equal(release.macEnabled, false);
+  assert.equal(release.candidateMacEnabled, true);
+  assert.equal(release.webArtifactName, "butts-v1.2.3-web-gpkg");
+});
+
+test("private release identities are strict", async () => {
+  const base = {
+    registryFile,
+    gameId: "blend-in",
+    sourceSha: sha,
+    version: "v1.0.0",
+    profile: "mac",
+    buildRunId: "1",
+    resume: "false"
+  };
+  await assert.rejects(resolvePrivateRelease({ ...base, sourceSha: "A".repeat(40) }), /source SHA/);
+  await assert.rejects(resolvePrivateRelease({ ...base, version: "1.0.0" }), /version/);
+  await assert.rejects(resolvePrivateRelease({ ...base, buildRunId: "0" }), /run ID/);
+  await assert.rejects(resolvePrivateRelease({ ...base, profile: "web" }), /profile/);
+  await assert.rejects(resolvePrivateRelease({ ...base, resume: "yes" }), /resume/);
+});
+
+test("private registry cannot redirect an approved game", async () => {
+  const registry = JSON.parse(await readFile(registryFile, "utf8"));
+  registry.games.butts.repository = "attacker/example";
+  assert.throws(() => validatePrivateRegistry(registry), /not approved/);
+});
+
+test("effective configuration freezes the selected target profile", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "gregeland-private-config-"));
+  const outputFile = path.join(directory, "effective.json");
+  try {
+    await writeEffectiveConfig({
+      registryFile,
+      gameId: "butts",
+      sourceSha: sha,
+      version: "v9.8.7",
+      profile: "web",
+      buildRunId: "42",
+      resume: "false",
+      outputFile
+    });
+    const config = JSON.parse(await readFile(outputFile, "utf8"));
+    assert.equal(config.web.enabled, true);
+    assert.equal(config.mac.enabled, false);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});

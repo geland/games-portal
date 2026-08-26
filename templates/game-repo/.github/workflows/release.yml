@@ -123,6 +123,18 @@ jobs:
           WEB_BUILD_DIR: ${{ runner.temp }}/gregeland-release/web
         run: bash .github/scripts/build-web.sh
 
+      - name: Package the Web candidate as constrained data
+        if: steps.game.outputs.web_enabled == 'true'
+        env:
+          ARTIFACT_KIND: web
+          ARTIFACT_INPUT: ${{ runner.temp }}/gregeland-release/web
+          ARTIFACT_PACKAGE: ${{ runner.temp }}/gregeland-release/packages/${{ steps.game.outputs.slug }}-${{ needs.authorize.outputs.version }}-web.gpkg
+          GAME_SLUG: ${{ steps.game.outputs.slug }}
+          RELEASE_VERSION: ${{ needs.authorize.outputs.version }}
+          SOURCE_COMMIT: ${{ needs.authorize.outputs.commit }}
+          WEB_ENTRY: ${{ steps.game.outputs.web_entry }}
+        run: node .github/release-tools/artifact-container-cli.mjs pack
+
       - name: Stage a fresh sanitized Mac project copy
         if: steps.game.outputs.mac_enabled == 'true'
         env:
@@ -148,30 +160,43 @@ jobs:
           MAC_BUILD_DIR: ${{ runner.temp }}/gregeland-release/macos
         run: bash .github/scripts/build-macos.sh
 
-      - name: Archive the unsigned macOS candidate
+      - name: Package the unsigned Mac app as constrained data
         if: steps.game.outputs.mac_enabled == 'true'
         env:
-          MAC_APP: ${{ runner.temp }}/gregeland-release/macos/${{ steps.game.outputs.mac_bundle_name }}.app
-          MAC_ARCHIVE: ${{ runner.temp }}/gregeland-release/${{ steps.game.outputs.slug }}-${{ needs.authorize.outputs.version }}-macos-unsigned.zip
-        run: ditto -c -k --sequesterRsrc --keepParent "${MAC_APP}" "${MAC_ARCHIVE}"
+          ARTIFACT_KIND: mac
+          ARTIFACT_INPUT: ${{ runner.temp }}/gregeland-release/macos/${{ steps.game.outputs.mac_bundle_name }}.app
+          ARTIFACT_PACKAGE: ${{ runner.temp }}/gregeland-release/packages/${{ steps.game.outputs.slug }}-${{ needs.authorize.outputs.version }}-mac.gpkg
+          GAME_SLUG: ${{ steps.game.outputs.slug }}
+          RELEASE_VERSION: ${{ needs.authorize.outputs.version }}
+          SOURCE_COMMIT: ${{ needs.authorize.outputs.commit }}
+          MAC_BUNDLE_NAME: ${{ steps.game.outputs.mac_bundle_name }}
+        run: node .github/release-tools/artifact-container-cli.mjs pack
 
-      - name: Upload the unsigned Web candidate
+      - name: Re-verify exact clean source before artifact handoff
+        env:
+          EXPECTED_COMMIT: ${{ needs.authorize.outputs.commit }}
+        run: |
+          test "$(git rev-parse HEAD)" = "${EXPECTED_COMMIT}"
+          test -z "$(git status --porcelain=v1 --untracked-files=all)"
+
+      - name: Upload the constrained Web data package
         if: steps.game.outputs.web_enabled == 'true'
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
-          name: ${{ steps.game.outputs.slug }}-${{ needs.authorize.outputs.version }}-web-unsigned
-          path: ${{ runner.temp }}/gregeland-release/web
+          name: ${{ steps.game.outputs.slug }}-${{ needs.authorize.outputs.version }}-web-gpkg
+          path: ${{ runner.temp }}/gregeland-release/packages/${{ steps.game.outputs.slug }}-${{ needs.authorize.outputs.version }}-web.gpkg
           if-no-files-found: error
+          compression-level: 0
           retention-days: 1
           overwrite: false
           include-hidden-files: false
 
-      - name: Upload the unsigned macOS candidate
+      - name: Upload the constrained unsigned Mac data package
         if: steps.game.outputs.mac_enabled == 'true'
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
-          name: ${{ steps.game.outputs.slug }}-${{ needs.authorize.outputs.version }}-macos-unsigned
-          path: ${{ runner.temp }}/gregeland-release/${{ steps.game.outputs.slug }}-${{ needs.authorize.outputs.version }}-macos-unsigned.zip
+          name: ${{ steps.game.outputs.slug }}-${{ needs.authorize.outputs.version }}-mac-gpkg
+          path: ${{ runner.temp }}/gregeland-release/packages/${{ steps.game.outputs.slug }}-${{ needs.authorize.outputs.version }}-mac.gpkg
           if-no-files-found: error
           compression-level: 0
           retention-days: 1

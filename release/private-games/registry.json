@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "games": {
+    "butts": {
+      "repository": "geland/butts",
+      "config": "release/private-games/configs/butts.json",
+      "bundleIdentifier": "com.gregeland.butts",
+      "profiles": ["web", "web+mac"]
+    },
+    "blend-in": {
+      "repository": "geland/blend-in",
+      "config": "release/private-games/configs/blend-in.json",
+      "bundleIdentifier": "com.gregeland.blendin",
+      "profiles": ["mac"]
+    }
+  }
+}

@@ -66,12 +66,14 @@ regular expressions; the authorization job rejects anything that is not
 exactly `vMAJOR.MINOR.PATCH` (with no leading zeroes or suffix). A manual run
 requires both that exact version and the full 40-character commit SHA.
 
-The workflow uploads unsigned candidates with one-day retention. These files
-are build evidence, not a public release. Never present an unsigned Mac
-candidate as a downloadable game. The protected portal workflow must validate
-the exact source/run/artifact identity, repackage it into the constrained
-Gregeland container, and perform signing/publication on a fresh runner before a
-stable manifest can exist.
+The workflow uploads constrained `.gpkg` data packages with one-day retention.
+They contain Web output and/or an unsigned Mac app, but remain build evidence,
+not a public release. Never present an unsigned Mac candidate as a downloadable
+game. A manually dispatched run is deliberately ineligible for publication;
+the central handoff accepts only a successful exact semantic-version tag run.
+The protected portal workflow validates the exact source, run, artifact ID,
+server digest, and inner package identity, then performs signing/publication on
+a fresh runner before a stable manifest can exist.
 
 ## What the workflow verifies
 

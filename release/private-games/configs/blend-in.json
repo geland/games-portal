@@ -1,0 +1,16 @@
+{
+  "slug": "blend-in",
+  "projectPath": ".",
+  "godotVersion": "4.6.2",
+  "web": {
+    "enabled": false,
+    "preset": "Web",
+    "entry": "index.html"
+  },
+  "mac": {
+    "enabled": true,
+    "preset": "macOS",
+    "bundleName": "Blend In",
+    "entitlements": null
+  }
+}

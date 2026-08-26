@@ -58,8 +58,8 @@ if ! node "${RELEASE_TOOL_ROOT}/config.mjs" validate-executable-name "${EXECUTAB
   echo "Mac bundle executable metadata is unsafe" >&2
   exit 1
 fi
-if [[ ! -f "${MAC_APP}/Contents/MacOS/${EXECUTABLE}" ]]; then
-  echo "Mac bundle executable metadata is unsafe or missing" >&2
+if [[ ! -f "${MAC_APP}/Contents/MacOS/${EXECUTABLE}" || ! -x "${MAC_APP}/Contents/MacOS/${EXECUTABLE}" ]]; then
+  echo "Mac bundle executable metadata is unsafe, missing, or not executable" >&2
   exit 1
 fi
 

@@ -40,9 +40,12 @@ Cloudflare Workers token. Game publication uses the separate
 game release cannot deploy the portal or edit DNS.
 
 This public repository is the release authority. Game source repositories do
-not receive Apple or R2 credentials. A credential-free job builds an exact
-allowlisted source commit, then a fresh protected runner validates the bounded
-data package and runs only portal-owned signing and publication code.
+not receive Apple or R2 credentials. Credential-free jobs build exact source
+commits and emit bounded data packages. The public-source workflow builds its
+fixed Judah-owned allowlist directly; the private-source workflow accepts only
+successful exact-tag candidate runs from its separate fixed allowlist. A fresh
+protected runner validates package and GitHub run identity before running only
+portal-owned signing and publication code.
 
 See [`docs/ci-credentials.md`](docs/ci-credentials.md) for the exact secret and
 Apple signing setup, and [`docs/release-contract.md`](docs/release-contract.md)
@@ -53,6 +56,11 @@ Reusable private Godot repository validation and unsigned-candidate files live i
 template only after choosing the exact release commit for a game. Private game
 repositories must not receive production release credentials, and the template
 never absorbs a local dirty working tree automatically.
+
+The protected private-source handoff is documented in
+[`release/private-games`](release/private-games/README.md). A manually built
+candidate is validation evidence only; centrally publishable provenance
+requires the exact semantic-version tag run recorded by GitHub.
 
 Do not copy privileged credentials into any game repository. Public-source
 release configuration and its trust-boundary details

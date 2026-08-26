@@ -21,10 +21,21 @@ Store these only in the protected `portal-production` environment.
 
 Private game repositories receive no Apple, Cloudflare, or R2 credential. Their
 workflows validate source and may upload short-lived unsigned release
-candidates using only the default read-only `GITHUB_TOKEN`. A future central
-private-source handoff may use a release-authority credential with only Actions
-artifact read access to the fixed private repositories; it must not grant source
-write or production access.
+candidates using only the default read-only `GITHUB_TOKEN`. The central
+private-source handoff uses:
+
+- `PRIVATE_ACTIONS_READ_TOKEN`
+
+Store it only in `game-release-production`. Use a fine-grained token or GitHub
+App installation token restricted to the fixed private repositories with
+Actions read, Contents read, and metadata read only. Contents read is used only
+to resolve the exact Git tag and reject a same-named branch; private source is
+never checked out or executed by the production job. The token must not grant
+contents write, workflow write, administration, or production access. The central workflow accepts only
+a successful exact-version-tag run whose GitHub-recorded repository, workflow
+path, tag, and source SHA match the approved release, then downloads artifacts
+by immutable ID and verifies their server digest and constrained package
+contents without executing them.
 
 ## Judah's public repositories
 
@@ -52,7 +63,7 @@ prove GitHub branch or environment protection. Before any central release
 secret is stored, the repository **MUST** protect `main` and the
 `game-release-production` environment **MUST** allow deployment from
 selected branch `main` only, require at least one reviewer, prevent self-review, and
-disallow bypass.
+disallow administrator bypass.
 
 ## macOS release jobs
 
