@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+readonly RELEASE_TOOL_ROOT="${RELEASE_TOOL_ROOT:-${SCRIPT_DIR}/../release-tools}"
+
 : "${PROJECT_PATH:?PROJECT_PATH is required}"
 : "${RUNNER_TEMP:?RUNNER_TEMP is required}"
 : "${RELEASE_TARGET:?RELEASE_TARGET is required}"
@@ -15,13 +18,17 @@ mkdir -p "${STAGE_PROJECT}"
 rsync -a \
   --exclude '/.git/' \
   --exclude '/.godot/' \
+  --exclude '/.github/release-tools/node_modules/' \
   --exclude '/addons/godot_ai/' \
   --exclude '.DS_Store' \
   "${SOURCE_PROJECT}/" "${STAGE_PROJECT}/"
 
-node .github/release-tools/sanitize-stage.mjs "${STAGE_PROJECT}"
+node "${RELEASE_TOOL_ROOT}/sanitize-stage.mjs" "${STAGE_PROJECT}"
 if [[ -f "${SOURCE_PROJECT}/scripts/ci-sanitize-stage.sh" ]]; then
-  RELEASE_TARGET="${RELEASE_TARGET}" bash "${SOURCE_PROJECT}/scripts/ci-sanitize-stage.sh" "${STAGE_PROJECT}" "${RELEASE_TARGET}"
+  (
+    cd "${STAGE_PROJECT}"
+    RELEASE_TARGET="${RELEASE_TARGET}" bash "./scripts/ci-sanitize-stage.sh" "${STAGE_PROJECT}" "${RELEASE_TARGET}"
+  )
 fi
 
 echo "PROJECT_PATH=${STAGE_PROJECT}" >> "${GITHUB_ENV}"

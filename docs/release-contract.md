@@ -5,10 +5,35 @@ verifies their sizes and SHA-256 digests, and writes the stable manifest last.
 Moving the stable manifest is the only supported release or rollback action.
 
 Normal release jobs abort if any immutable key already exists and use a
-conditional create on every immutable write. A deliberately selected resume may
-continue a partially uploaded version only after byte-for-byte verification of
-every existing object and exact agreement with any existing version manifest;
-it never overwrites immutable content.
+conditional create on every immutable write. They may publish only a version
+strictly newer than every version already named by `stable.json` or the version
+index; rollback is a separate explicit operation.
+
+The complete release manifest must fit the portal's 32 KiB stable-manifest
+limit, and the version index must fit the publisher's 1 MiB readback limit.
+Both sizes are checked before any release artifact or manifest is written.
+
+`play.games.gregeland.com` is intentionally uncached at the Cloudflare edge.
+Before writing anything, the publisher probes a reserved missing key for every
+distinct advertised directory/extension combination and fails if the origin is
+no longer clearly `DYNAMIC`/`BYPASS`. Before enabling CDN caching, inventory and
+import the existing zone ruleset, add a managed 404/410 TTL of zero, and redesign
+the probe/recovery contract. Cloudflare otherwise caches 404/410 responses for
+three minutes by default, which can hide a newly uploaded immutable object from
+the public smoke check.
+
+A deliberately selected resume may continue a partially uploaded version and
+finish promoting it only when it is strictly newer than the current stable
+version and no still-newer version is indexed. It never moves `stable.json`
+backward; rollback is a separate operation. When the immutable version manifest
+exists, its strictly validated slug, version, source, targets, and file
+descriptors are authoritative; every advertised remote object is then read back
+and verified against its size and SHA-256 digest. This avoids requiring a newly
+signed/notarized Mac ZIP to reproduce the original ZIP bytes.
+Without that immutable manifest, existing Web artifacts must match the rebuilt
+bytes. An existing signed Mac ZIP cannot be resumed automatically: recovery
+requires the original notarized artifact and an explicitly approved manual
+procedure. Resume never overwrites immutable content.
 
 ## Slugs
 
@@ -80,15 +105,18 @@ Motion Dodge may also include a tracker target:
 
 ## Publish order
 
-1. Validate a `vMAJOR.MINOR.PATCH` tag and build from its exact commit.
+1. Validate a `vMAJOR.MINOR.PATCH` version and build from its exact commit. The
+   central public-source workflow is manual-only; private game repositories may
+   use an exact tag or manual dispatch.
 2. Run automated tests and platform smoke checks.
 3. Sign, notarize, staple, and verify every Mac application.
 4. Upload Web and Mac artifacts to new version keys.
-5. Check remote content type and size, then read every object back and verify its
-   full SHA-256 digest.
-6. Upload the immutable version manifest.
-7. Update the version index.
-8. Upload `stable.json` last.
+5. Verify every object's R2 metadata and full SHA-256 readback.
+6. Upload the immutable version manifest. This makes a later transient
+   public-origin failure safely resumable without reproducing signed ZIP bytes.
+7. Check every file and MIME type through the public custom domain.
+8. Update the version index.
+9. Upload `stable.json` last.
 
 Release jobs must use bucket-scoped R2 credentials. They must not receive the
 Worker/DNS deployment token.

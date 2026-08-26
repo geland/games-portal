@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+readonly RELEASE_TOOL_ROOT="${RELEASE_TOOL_ROOT:-${SCRIPT_DIR}/../release-tools}"
+
 : "${GODOT_BIN:?GODOT_BIN is required}"
 : "${PROJECT_PATH:?PROJECT_PATH is required}"
 : "${MAC_PRESET:?MAC_PRESET is required}"
@@ -15,7 +18,7 @@ restore_preset() {
 }
 trap restore_preset EXIT
 
-node .github/release-tools/config.mjs disable-signing
+node "${RELEASE_TOOL_ROOT}/config.mjs" disable-signing
 mkdir -p "${MAC_BUILD_DIR}"
 "${GODOT_BIN}" --headless --path "${PROJECT_PATH}" --export-release "${MAC_PRESET}" "${MAC_BUILD_DIR}/${MAC_BUNDLE_NAME}.app"
 

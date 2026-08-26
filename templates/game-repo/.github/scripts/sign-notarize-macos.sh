@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+readonly RELEASE_TOOL_ROOT="${RELEASE_TOOL_ROOT:-${SCRIPT_DIR}/../release-tools}"
+
 : "${MAC_APP:?MAC_APP is required}"
 : "${MAC_ARCHIVE:?MAC_ARCHIVE is required}"
 : "${APPLE_DEVELOPER_ID_P12_BASE64:?APPLE_DEVELOPER_ID_P12_BASE64 is required}"
@@ -16,6 +19,47 @@ if [[ ! "${APPLE_TEAM_ID}" =~ ^[A-Z0-9]{10}$ ]]; then
 fi
 if [[ ! -d "${MAC_APP}" ]]; then
   echo "Missing macOS app bundle: ${MAC_APP}" >&2
+  exit 1
+fi
+
+readonly INFO_PLIST="${MAC_APP}/Contents/Info.plist"
+if [[ ! -f "${INFO_PLIST}" ]]; then
+  echo "Missing macOS Info.plist" >&2
+  exit 1
+fi
+plutil -lint "${INFO_PLIST}" >/dev/null
+if [[ -n "${MAC_EXPECTED_BUNDLE_ID:-}" ]]; then
+  if [[ ! "${MAC_EXPECTED_BUNDLE_ID}" =~ ^[A-Za-z0-9][A-Za-z0-9.-]+$ ]]; then
+    echo "MAC_EXPECTED_BUNDLE_ID is malformed" >&2
+    exit 1
+  fi
+  ACTUAL_BUNDLE_ID="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "${INFO_PLIST}")"
+  if [[ "${ACTUAL_BUNDLE_ID}" != "${MAC_EXPECTED_BUNDLE_ID}" ]]; then
+    echo "Mac bundle identifier does not match the trusted release configuration" >&2
+    exit 1
+  fi
+fi
+if [[ -n "${MAC_EXPECTED_VERSION:-}" ]]; then
+  if [[ ! "${MAC_EXPECTED_VERSION}" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+    echo "MAC_EXPECTED_VERSION must exactly match vMAJOR.MINOR.PATCH" >&2
+    exit 1
+  fi
+  APPROVED_BUNDLE_VERSION="${MAC_EXPECTED_VERSION#v}"
+  ACTUAL_SHORT_VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "${INFO_PLIST}")"
+  ACTUAL_BUNDLE_VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "${INFO_PLIST}")"
+  if [[ "${ACTUAL_SHORT_VERSION}" != "${APPROVED_BUNDLE_VERSION}" || "${ACTUAL_BUNDLE_VERSION}" != "${APPROVED_BUNDLE_VERSION}" ]]; then
+    echo "Mac bundle version metadata does not match the approved release version" >&2
+    exit 1
+  fi
+fi
+
+EXECUTABLE="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "${INFO_PLIST}")"
+if ! node "${RELEASE_TOOL_ROOT}/config.mjs" validate-executable-name "${EXECUTABLE}"; then
+  echo "Mac bundle executable metadata is unsafe" >&2
+  exit 1
+fi
+if [[ ! -f "${MAC_APP}/Contents/MacOS/${EXECUTABLE}" ]]; then
+  echo "Mac bundle executable metadata is unsafe or missing" >&2
   exit 1
 fi
 
@@ -88,7 +132,6 @@ printf '%s\n' "${SIGNING_DETAILS}" | grep -F "TeamIdentifier=${APPLE_TEAM_ID}" >
 printf '%s\n' "${SIGNING_DETAILS}" | grep -F 'Authority=Developer ID Application:' >/dev/null
 printf '%s\n' "${SIGNING_DETAILS}" | grep -E 'flags=.*\(runtime\)' >/dev/null
 
-EXECUTABLE="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "${MAC_APP}/Contents/Info.plist")"
 ARCHITECTURES="$(lipo -archs "${MAC_APP}/Contents/MacOS/${EXECUTABLE}")"
 printf '%s\n' "${ARCHITECTURES}" | grep -w arm64 >/dev/null
 printf '%s\n' "${ARCHITECTURES}" | grep -w x86_64 >/dev/null

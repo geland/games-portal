@@ -45,14 +45,26 @@ sensitive and is passed only to the final publish step.
 workflows may import, test, and build source, but receive no Apple certificate,
 notary key, or R2 credential.
 
-Privileged releases for those games will run from the private `geland` games
-release repository after its central workflow is installed. The dispatcher
-must select a configured public repository, an exact 40-character source
-commit, and an immutable semantic version. It checks
-out that source without persisting credentials, combines it with trusted
-release tooling from the private repository, and only then receives the
-production environment secrets. Never execute workflow code or release scripts
-from the public source checkout with those secrets present.
+Privileged releases for those games run from this private repository through
+`.github/workflows/release-public-game.yml`. The dispatcher must select one of
+the three fixed repositories, an exact lowercase 40-character source commit,
+and an immutable semantic version.
+
+The public commit is imported, tested, and exported only in a job with no
+GitHub environment and no Apple or R2 secret. It uploads constrained data
+packages containing the Web output and unsigned Mac app. The production job
+runs on a fresh runner, checks out only the trusted portal commit, rejects
+unsafe or mismatched packages, and executes only portal-owned signing and
+publishing scripts. It never checks out the public source. See
+[`../release/public-games`](../release/public-games/README.md) for the exact
+boundary and allowlist.
+
+The main-ref and workflow-SHA checks in YAML are defense in depth; they do not
+prove GitHub branch or environment protection. Before any central release
+secret is stored, the repository **MUST** protect `main` and the `production`
+environment **MUST** allow deployment from selected branch `main` only, require
+at least one reviewer, and prevent self-review. If the private-repository plan
+cannot enforce every control, do not enable this privileged workflow.
 
 ## macOS release jobs
 
@@ -80,9 +92,8 @@ Native iPhone/iPad distribution is a different workflow. TestFlight and App
 Store releases involve provisioning profiles and Apple review; the initial
 phone/tablet path for Gregeland Games is the browser build.
 
-The workflow references a `production` GitHub environment so environment
-secrets and an approval gate can be used when the account plan supports them.
-GitHub's required-reviewer protection is not available for private repositories
-on every plan; exact tags and manually dispatched full commit SHAs remain the
-minimum release gates. Always review workflow changes before approving a release
-because the selected commit's workflow code receives these credentials.
+The privileged workflows reference the protected `production` environment.
+Always review workflow changes before approving a release because trusted
+portal code in the approved commit receives these credentials. Exact tags,
+full commit SHAs, and in-workflow ref checks supplement—but never replace—the
+required GitHub branch and environment protections.

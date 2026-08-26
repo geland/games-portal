@@ -24,3 +24,8 @@ Terraform is introduced, import it rather than recreating it.
 Cache and transform rules intentionally are not defined here. A Terraform
 ruleset owns its whole Cloudflare phase, so existing rules must first be
 inventoried and imported before a game-specific rule can be appended safely.
+Edge caching for `play.games.gregeland.com` is currently disabled, and the
+publisher verifies reserved missing probes for every advertised artifact type
+remain `DYNAMIC` or `BYPASS` before it uploads. Before enabling caching, inventory/import the zone ruleset
+and set the 404/410 edge TTL to zero so a cached miss cannot hide a newly
+uploaded immutable release.

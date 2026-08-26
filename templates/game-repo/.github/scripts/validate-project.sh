@@ -1,18 +1,27 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+readonly RELEASE_TOOL_ROOT="${RELEASE_TOOL_ROOT:-${SCRIPT_DIR}/../release-tools}"
+
 : "${GODOT_BIN:?GODOT_BIN is required}"
 : "${PROJECT_PATH:?PROJECT_PATH is required}"
 : "${RELEASE_TARGET:?RELEASE_TARGET is required}"
 
-node .github/release-tools/config.mjs check-project
+node "${RELEASE_TOOL_ROOT}/config.mjs" check-project
 "${GODOT_BIN}" --headless --editor --path "${PROJECT_PATH}" --quit
 
 if [[ -f "${PROJECT_PATH}/scripts/ci-test.sh" ]]; then
-  GODOT_BIN="${GODOT_BIN}" bash "${PROJECT_PATH}/scripts/ci-test.sh"
+  (
+    cd "${PROJECT_PATH}"
+    GODOT_BIN="${GODOT_BIN}" bash "./scripts/ci-test.sh"
+  )
 fi
 
-if ! git diff --exit-code -- .; then
-  echo "Godot validation changed tracked files; commit migrations and keep generated caches ignored" >&2
+readonly SOURCE_GIT_ROOT="${SOURCE_GIT_ROOT:-.}"
+SOURCE_STATUS="$(git -C "${SOURCE_GIT_ROOT}" status --porcelain=v1 --untracked-files=all)"
+if [[ -n "${SOURCE_STATUS}" ]]; then
+  printf '%s\n' "${SOURCE_STATUS}" >&2
+  echo "Source provenance changed during validation; release source must remain fully clean" >&2
   exit 1
 fi

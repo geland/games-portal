@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { assertProjectReleaseReady, buildManifest, contentTypeFor, createScopedR2Credentials, disablePresetSigning, planImmutableUploads, sanitizeStagedProjectText, validateConfig, VERSION_RE } from "../lib.mjs";
+import { assertProjectReleaseReady, buildManifest, contentTypeFor, createScopedR2Credentials, disablePresetSigning, isSafeMacExecutableName, patchMacReleaseVersion, planImmutableUploads, sanitizeStagedProjectText, validateConfig, VERSION_RE } from "../lib.mjs";
+import { assertReleaseManifestSize, assertUncachedOriginResponse, assertVersionIndexSize, buildCacheProbeKeys, compareReleaseVersions, decideReleasePreflight, validateImmutableManifest, validateVersionIndex } from "../publish-release.mjs";
 
 const config = {
   slug: "astro-bro",
@@ -9,10 +10,53 @@ const config = {
   web: { enabled: true, preset: "Web", entry: "index.html" },
   mac: { enabled: true, preset: "macOS", bundleName: "Astro Bro", entitlements: null }
 };
+const sourceCommit = "a".repeat(40);
+const publishedAt = "2026-08-25T12:00:00.000Z";
+
+function releaseManifest(version = "v1.2.3") {
+  const slug = "astro-bro";
+  const webKey = `releases/${slug}/${version}/web/index.html`;
+  const macKey = `downloads/${slug}/${version}/${slug}-macos-universal.zip`;
+  return {
+    slug,
+    version,
+    sourceCommit,
+    publishedAt,
+    web: { entry: "index.html" },
+    mac: { key: macKey, filename: `${slug}-macos-universal.zip` },
+    files: [
+      { key: webKey, size: 10, sha256: "b".repeat(64), contentType: "text/html; charset=utf-8" },
+      { key: macKey, size: 20, sha256: "c".repeat(64), contentType: "application/zip" }
+    ]
+  };
+}
+
+function versionEntry(manifest) {
+  return {
+    version: manifest.version,
+    sourceCommit: manifest.sourceCommit,
+    publishedAt: manifest.publishedAt,
+    manifest: `manifests/${manifest.slug}/versions/${manifest.version}.json`
+  };
+}
 
 test("release versions are exact semantic tags", () => {
   assert.equal(VERSION_RE.test("v1.2.3"), true);
   for (const value of ["1.2.3", "v01.2.3", "v1.2", "v1.2.3-beta", "v1.2.3/evil"]) assert.equal(VERSION_RE.test(value), false);
+});
+
+test("release version ordering is numeric and supports large components", () => {
+  assert.equal(compareReleaseVersions("v1.10.0", "v1.9.99"), 1);
+  assert.equal(compareReleaseVersions("v2.0.0", "v2.0.0"), 0);
+  assert.equal(compareReleaseVersions("v999999999999999999999.0.0", "v999999999999999999998.999.999"), 1);
+  assert.throws(() => compareReleaseVersions("v1.0", "v1.0.0"), /invalid release version/);
+});
+
+test("Mac executable names allow safe spaces and reject unsafe path names", () => {
+  for (const value of ["Racing Maze", "Astro Bro", "Game.2D+Client"]) assert.equal(isSafeMacExecutableName(value), true);
+  for (const value of [".", "..", "../Game", "Contents/MacOS/Game", "Game\\Helper", " Game", "Game\tHelper", "Game\nHelper", "Game\u007fHelper", ""]) {
+    assert.equal(isSafeMacExecutableName(value), false);
+  }
 });
 
 test("configuration is strict", () => {
@@ -25,6 +69,7 @@ test("critical Godot MIME types are explicit", () => {
   assert.equal(contentTypeFor("game.wasm"), "application/wasm");
   assert.equal(contentTypeFor("game.pck"), "application/octet-stream");
   assert.equal(contentTypeFor("index.html"), "text/html; charset=utf-8");
+  assert.equal(contentTypeFor("music.mp3"), "audio/mpeg");
 });
 
 test("preset rewrite disables only release-time signing and notarization", () => {
@@ -34,6 +79,14 @@ test("preset rewrite disables only release-time signing and notarization", () =>
   assert.match(result, /codesign\/identity=""/);
   assert.match(result, /notarization\/notarization=0/);
   assert.match(result, /name="Web"/);
+});
+
+test("Mac release versions are injected into both bundle version fields", () => {
+  const source = `[preset.0]\nname="macOS"\nplatform="macOS"\n[preset.0.options]\napplication/short_version="0.1"\napplication/version="1"\n`;
+  const result = patchMacReleaseVersion(source, "macOS", "v2.3.4");
+  assert.match(result, /application\/short_version="2.3.4"/);
+  assert.match(result, /application\/version="2.3.4"/);
+  assert.throws(() => patchMacReleaseVersion(source, "macOS", "2.3.4"), /vMAJOR/);
 });
 
 test("temporary R2 credentials carry path and operation scope", () => {
@@ -52,6 +105,190 @@ test("manifest only advertises successful targets", () => {
   const manifest = buildManifest({ slug: "astro-bro", version: "v1.0.0", sourceCommit: "a".repeat(40), publishedAt: "2026-01-01T00:00:00Z", webEntry: "index.html", files: [] });
   assert.deepEqual(manifest.web, { entry: "index.html" });
   assert.equal(manifest.mac, undefined);
+});
+
+test("authoritative immutable manifests require strict source, target, and file schemas", () => {
+  const manifest = releaseManifest();
+  assert.equal(validateImmutableManifest(manifest, {
+    slug: manifest.slug,
+    version: manifest.version,
+    sourceCommit,
+    webEntry: "index.html",
+    macKey: manifest.mac.key
+  }), manifest);
+  assert.throws(() => validateImmutableManifest({ ...manifest, extra: true }, { slug: manifest.slug }), /unknown key extra/);
+  assert.throws(() => validateImmutableManifest(manifest, { slug: manifest.slug, sourceCommit: "d".repeat(40) }), /sourceCommit does not match/);
+  assert.throws(() => validateImmutableManifest(manifest, { slug: manifest.slug, webEntry: null }), /unexpected Web target/);
+
+  const missingMac = structuredClone(manifest);
+  missingMac.files.pop();
+  assert.throws(() => validateImmutableManifest(missingMac, { slug: manifest.slug }), /advertised Mac archive/);
+  const wrongType = structuredClone(manifest);
+  wrongType.files[0].contentType = "application/octet-stream";
+  assert.throws(() => validateImmutableManifest(wrongType, { slug: manifest.slug }), /content type is invalid/);
+});
+
+test("version indexes are strict and reject duplicate versions", () => {
+  const manifest = releaseManifest();
+  const entry = versionEntry(manifest);
+  assert.doesNotThrow(() => validateVersionIndex({ slug: manifest.slug, versions: [entry] }, manifest.slug));
+  assert.throws(() => validateVersionIndex({ slug: manifest.slug, versions: [entry, entry] }, manifest.slug), /duplicate v1.2.3/);
+});
+
+test("release documents are bounded before any R2 write", () => {
+  assert.doesNotThrow(() => assertReleaseManifestSize(releaseManifest()));
+  const oversizedManifest = releaseManifest();
+  oversizedManifest.files = Array.from({ length: 300 }, (_, index) => ({
+    key: `releases/astro-bro/v1.2.3/web/assets/file-${index}.pck`,
+    size: 1,
+    sha256: "d".repeat(64),
+    contentType: "application/octet-stream"
+  }));
+  assert.throws(() => assertReleaseManifestSize(oversizedManifest), /32768-byte publication limit/);
+
+  const oversizedIndex = {
+    slug: "astro-bro",
+    versions: Array.from({ length: 8_000 }, (_, index) => ({
+      version: `v1.0.${index}`,
+      sourceCommit,
+      publishedAt,
+      manifest: `manifests/astro-bro/versions/v1.0.${index}.json`
+    }))
+  };
+  assert.throws(() => assertVersionIndexSize(oversizedIndex), /1048576-byte publication limit/);
+});
+
+test("public release probes fail closed if CDN caching can preserve a 404", () => {
+  assert.doesNotThrow(() => assertUncachedOriginResponse({
+    key: "releases/game/probe.html", status: 404, cacheStatus: "DYNAMIC", age: null
+  }));
+  assert.doesNotThrow(() => assertUncachedOriginResponse({
+    key: "releases/game/probe.html", status: 404, cacheStatus: "BYPASS", age: null
+  }));
+  assert.throws(() => assertUncachedOriginResponse({
+    key: "releases/game/probe.html", status: 404, cacheStatus: "MISS", age: null
+  }), /caching is enabled or ambiguous/);
+  assert.throws(() => assertUncachedOriginResponse({
+    key: "releases/game/probe.html", status: 404, cacheStatus: "DYNAMIC", age: "1"
+  }), /caching is enabled or ambiguous/);
+
+  const probes = buildCacheProbeKeys([
+    { key: "releases/game/v1.0.0/web/index.html" },
+    { key: "releases/game/v1.0.0/web/game.js" },
+    { key: "releases/game/v1.0.0/web/engine/game.js" },
+    { key: "releases/game/v1.0.0/web/game.wasm" },
+    { key: "downloads/game/v1.0.0/game.zip" }
+  ], "v1.0.0", sourceCommit);
+  assert.equal(probes.length, 5);
+  assert.ok(probes.some((key) => key.endsWith(".js")));
+  assert.ok(probes.some((key) => key.endsWith(".wasm")));
+  assert.ok(probes.some((key) => key.endsWith(".zip")));
+  assert.throws(() => buildCacheProbeKeys([
+    { key: "releases/game/v1.0.0/web/.gregeland-cache-probe-collision.js" }
+  ], "v1.0.0", sourceCommit), /reserved cache-probe namespace/);
+});
+
+test("ordinary releases must advance beyond every stable or indexed version", () => {
+  const stable = releaseManifest("v1.5.0");
+  const indexedNewer = releaseManifest("v2.0.0");
+  const common = {
+    allowResume: false,
+    slug: stable.slug,
+    sourceCommit,
+    expectedArtifactKeys: [],
+    existingArtifactKeys: new Set(),
+    macKey: undefined,
+    immutableManifest: null,
+    index: { slug: stable.slug, versions: [versionEntry(indexedNewer)] },
+    stable
+  };
+  assert.throws(() => decideReleasePreflight({ ...common, version: "v1.6.0" }), /newer than published version v2.0.0/);
+  assert.deepEqual(decideReleasePreflight({ ...common, version: "v2.0.1" }), {
+    artifactSource: "local", updateIndex: true, updateStable: true
+  });
+});
+
+test("resume never moves stable backward", () => {
+  const stable = releaseManifest("v2.0.0");
+  assert.throws(() => decideReleasePreflight({
+    allowResume: true,
+    slug: stable.slug,
+    version: "v1.9.0",
+    sourceCommit,
+    expectedArtifactKeys: [],
+    existingArtifactKeys: new Set(),
+    macKey: undefined,
+    immutableManifest: null,
+    index: { slug: stable.slug, versions: [] },
+    stable
+  }), /resume cannot move stable backward from v2.0.0 to v1.9.0/);
+});
+
+test("resume can finish a newer partial Web release while the prior version is stable", () => {
+  const stable = releaseManifest("v1.0.0");
+  const webKey = "releases/astro-bro/v2.0.0/web/index.html";
+  assert.deepEqual(decideReleasePreflight({
+    allowResume: true,
+    slug: stable.slug,
+    version: "v2.0.0",
+    sourceCommit,
+    expectedArtifactKeys: [webKey],
+    existingArtifactKeys: new Set([webKey]),
+    macKey: undefined,
+    immutableManifest: null,
+    index: { slug: stable.slug, versions: [versionEntry(stable)] },
+    stable
+  }), { artifactSource: "local", updateIndex: true, updateStable: true });
+});
+
+test("resume can promote an authoritative newer release after its index write", () => {
+  const stable = releaseManifest("v1.0.0");
+  const manifest = releaseManifest("v2.0.0");
+  assert.deepEqual(decideReleasePreflight({
+    allowResume: true,
+    slug: manifest.slug,
+    version: manifest.version,
+    sourceCommit,
+    expectedArtifactKeys: manifest.files.map((file) => file.key),
+    existingArtifactKeys: new Set(manifest.files.map((file) => file.key)),
+    macKey: manifest.mac.key,
+    immutableManifest: manifest,
+    index: { slug: manifest.slug, versions: [versionEntry(manifest), versionEntry(stable)] },
+    stable
+  }), { artifactSource: "manifest", updateIndex: false, updateStable: true });
+});
+
+test("resume uses the immutable manifest instead of rebuilt signed bytes", () => {
+  const manifest = releaseManifest();
+  const result = decideReleasePreflight({
+    allowResume: true,
+    slug: manifest.slug,
+    version: manifest.version,
+    sourceCommit,
+    expectedArtifactKeys: manifest.files.map((file) => file.key),
+    existingArtifactKeys: new Set(manifest.files.map((file) => file.key)),
+    macKey: manifest.mac.key,
+    immutableManifest: manifest,
+    index: { slug: manifest.slug, versions: [versionEntry(manifest)] },
+    stable: structuredClone(manifest)
+  });
+  assert.deepEqual(result, { artifactSource: "manifest", updateIndex: false, updateStable: false });
+});
+
+test("resume fails clearly for an orphaned non-reproducible Mac archive", () => {
+  const manifest = releaseManifest();
+  assert.throws(() => decideReleasePreflight({
+    allowResume: true,
+    slug: manifest.slug,
+    version: manifest.version,
+    sourceCommit,
+    expectedArtifactKeys: manifest.files.map((file) => file.key),
+    existingArtifactKeys: new Set([manifest.mac.key]),
+    macKey: manifest.mac.key,
+    immutableManifest: null,
+    index: { slug: manifest.slug, versions: [] },
+    stable: null
+  }), /original notarized artifact.*manual recovery/);
 });
 
 test("normal publication rejects existing immutable keys while resume fills only gaps", () => {

@@ -96,20 +96,47 @@ exactly `vMAJOR.MINOR.PATCH` (with no leading zeroes or suffix). A manual run
 requires both that exact version and the full 40-character commit SHA.
 
 Normal publication fails before uploading if any immutable key already exists.
+Its version must also be strictly newer than every version already recorded in
+the stable manifest or version index; moving stable to an older release is a
+separate explicit rollback operation.
+The complete release manifest must fit the portal's 32 KiB routing limit and
+the version index must fit the publisher's 1 MiB readback limit; both checks
+happen before any immutable upload begins.
+The R2 custom origin must also remain uncached: preflight missing-object probes
+cover every advertised directory/extension combination and fail closed if
+Cloudflare reports cached or ambiguous behavior. The probe filename namespace
+is reserved and rejected in real artifacts. Do not enable CDN caching until a
+managed zero-TTL rule for 404/410 responses and an updated release recovery
+contract are in place.
 Each new object is also written with `If-None-Match: *`, checked through R2 by
-size and a full SHA-256 readback, and smoke-checked through the public custom
-domain with bounded retry/backoff. The immutable version manifest is next, the
-conditional version index follows, and `stable.json` is the final write.
+size and a full SHA-256 readback, then the immutable version manifest is
+written. Every file is next smoke-checked with its MIME type through the public
+custom domain using bounded retry/backoff. The conditional version index
+follows, and `stable.json` is the final write. Writing the immutable manifest
+before the public smoke check makes a transient origin failure safely resumable
+without trying to reproduce notarized ZIP bytes.
 
 ### Safely resume a partial release
 
 If a transient failure occurred after one or more immutable objects uploaded,
 manually dispatch the same version and commit with `resume_existing=true`.
-Resume mode never overwrites an immutable key. It first hashes every existing
-artifact byte-for-byte; if a version manifest exists, it must exactly describe
-the rebuilt artifacts. An existing index entry and stable manifest must also
-match exactly. Only verified missing objects or mutable promotion pointers are
-written. Any mismatch stops for manual investigation.
+Resume mode never overwrites an immutable key. It may finish promoting a
+strictly newer verified partial release when no still-newer version is indexed,
+but never moves stable backward; rollback is separate. If an immutable version
+manifest exists, the publisher validates its slug, version, source commit,
+targets, and every file descriptor, then treats it as authoritative and reads
+every advertised remote artifact back to verify its complete SHA-256 digest.
+This deliberately does not
+compare a newly signed Mac ZIP with the prior ZIP because signing and
+notarization are not reproducible byte-for-byte. The existing index entry and
+same-version stable manifest must exactly match that authoritative manifest.
+
+Without an immutable version manifest, automatic resume can fill gaps only
+after existing Web artifacts match the rebuilt bytes. If a signed Mac ZIP
+already exists, stop: automatic resume cannot establish which notarized bytes
+are authoritative. Preserve/use the original notarized artifact through an
+explicitly approved manual recovery procedure. Any mismatch stops for manual
+investigation before mutable release pointers are written.
 
 Do not delete partial release keys just to make a run green. Object removal is
 an exceptional, separately approved operation after inspecting the failed run

@@ -49,6 +49,12 @@ resource "cloudflare_r2_custom_domain" "game_releases" {
   min_tls     = "1.2"
 }
 
+# Edge caching for play.games.gregeland.com is intentionally not enabled. The
+# release publisher fails closed unless reserved missing artifact-type probes
+# are DYNAMIC or BYPASS. Before adding a cache ruleset, inventory/import the zone's existing
+# rules and set 404/410 edge TTL to zero so a cached miss cannot hide a newly
+# uploaded immutable release.
+
 resource "cloudflare_workers_custom_domain" "catalog" {
   account_id = var.cloudflare_account_id
   hostname   = "games.gregeland.com"

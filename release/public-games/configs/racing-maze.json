@@ -1,0 +1,16 @@
+{
+  "slug": "racing-maze",
+  "projectPath": ".",
+  "godotVersion": "4.6.2",
+  "web": {
+    "enabled": false,
+    "preset": "Gregeland Web",
+    "entry": "index.html"
+  },
+  "mac": {
+    "enabled": true,
+    "preset": "macOS",
+    "bundleName": "Racing Maze",
+    "entitlements": null
+  }
+}

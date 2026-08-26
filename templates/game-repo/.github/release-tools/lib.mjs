@@ -6,6 +6,16 @@ export const VERSION_RE = /^v(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-
 export const SHA_RE = /^[0-9a-f]{40}$/;
 export const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
+export function isSafeMacExecutableName(value) {
+  return typeof value === "string"
+    && value.length >= 1
+    && value.length <= 128
+    && value !== "."
+    && value !== ".."
+    && !/[\\/\x00-\x1f\x7f]/.test(value)
+    && /^[A-Za-z0-9][A-Za-z0-9 ._+\-]*$/.test(value);
+}
+
 const MIME_TYPES = new Map([
   [".css", "text/css; charset=utf-8"],
   [".html", "text/html; charset=utf-8"],
@@ -15,6 +25,7 @@ const MIME_TYPES = new Map([
   [".js", "text/javascript; charset=utf-8"],
   [".json", "application/json; charset=utf-8"],
   [".mjs", "text/javascript; charset=utf-8"],
+  [".mp3", "audio/mpeg"],
   [".ogg", "audio/ogg"],
   [".pck", "application/octet-stream"],
   [".png", "image/png"],
@@ -29,7 +40,7 @@ export function contentTypeFor(filename) {
 }
 
 export function isSafeRelativePath(value) {
-  if (typeof value !== "string" || !value || value.startsWith("/") || value.includes("\\") || value.includes("\0")) {
+  if (typeof value !== "string" || !value || value.startsWith("/") || value.includes("\\") || /[\x00-\x1f\x7f]/.test(value)) {
     return false;
   }
   return value.split("/").every((part) => part && part !== "." && part !== "..");
@@ -80,7 +91,7 @@ function validateTarget(raw, label, allowed) {
   };
 }
 
-export async function loadConfig(filename = ".gregeland-release.json") {
+export async function loadConfig(filename = process.env.RELEASE_CONFIG_FILE ?? ".gregeland-release.json") {
   return validateConfig(JSON.parse(await readFile(filename, "utf8")));
 }
 
@@ -117,6 +128,33 @@ export function findPreset(presets, name, platform) {
     if (preset.values.get("name") === name && preset.values.get("platform") === platform) return { index, ...preset };
   }
   throw new Error(`export preset ${JSON.stringify(name)} for ${platform} was not found`);
+}
+
+export function setPresetOption(text, presetName, platform, key, encodedValue) {
+  const parsed = parsePresets(text);
+  const preset = findPreset(parsed, presetName, platform);
+  const normalized = text.replaceAll("\r\n", "\n");
+  const header = `[preset.${preset.index}.options]`;
+  const start = normalized.indexOf(header);
+  if (start < 0) throw new Error(`${platform} preset options section is missing`);
+  const next = normalized.indexOf("\n[preset.", start + header.length);
+  const end = next < 0 ? normalized.length : next;
+  const section = normalized.slice(start, end);
+  const keyPattern = new RegExp(`^${key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}=.*$`, "gm");
+  const occurrences = [...section.matchAll(keyPattern)];
+  if (occurrences.length > 1) throw new Error(`duplicate preset option: ${key}`);
+  let nextSection;
+  if (occurrences.length === 1) nextSection = section.replace(keyPattern, `${key}=${encodedValue}`);
+  else nextSection = `${section.replace(/\n*$/, "")}\n${key}=${encodedValue}\n`;
+  return normalized.slice(0, start) + nextSection + normalized.slice(end);
+}
+
+export function patchMacReleaseVersion(text, presetName, releaseVersion) {
+  if (!VERSION_RE.test(releaseVersion)) throw new Error("release version must exactly match vMAJOR.MINOR.PATCH");
+  const value = JSON.stringify(releaseVersion.slice(1));
+  let result = setPresetOption(text, presetName, "macOS", "application/short_version", value);
+  result = setPresetOption(result, presetName, "macOS", "application/version", value);
+  return result;
 }
 
 export function assertProjectReleaseReady(config, projectText, presetsText, target) {

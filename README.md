@@ -37,9 +37,10 @@ all pass. Pull requests run the same quality gate without production access.
 Production uses a dedicated, account-scoped Cloudflare Workers token; game
 release jobs use bucket-scoped R2 credentials and cannot deploy the portal or
 edit DNS. Private game repositories may run their own privileged release job.
-Judah's public repositories receive credential-free validation only; their
-Apple signing and R2 publication will run from this private repository against
-an explicit public source commit SHA once the central workflow is installed.
+Judah's public repositories receive no Apple or R2 credentials; their central,
+manual-only release workflow builds an exact approved public commit in an
+unprivileged job, then signs and publishes verified data artifacts from this
+private repository on a fresh production runner.
 
 See [`docs/ci-credentials.md`](docs/ci-credentials.md) for the exact secret and
 Apple signing setup, and [`docs/release-contract.md`](docs/release-contract.md)
@@ -51,5 +52,8 @@ template only after choosing the exact release commit for a game; it never
 absorbs a local dirty working tree automatically.
 
 Do not copy the privileged release workflow or credentials into a public game
-repository. Public-source releases will use the central private release
-workflow; only their non-secret validation job belongs with the public source.
+repository. Public-source release configuration and its trust-boundary details
+live in [`release/public-games`](release/public-games/README.md); only
+credential-free validation belongs with the public source. Production release
+secrets require protected `main`, a main-only `production` environment,
+required review, and prevention of self-review as documented there.

@@ -2,9 +2,9 @@
 import { appendFile, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
-import { assertProjectReleaseReady, disablePresetSigning, loadConfig, SHA_RE, VERSION_RE } from "./lib.mjs";
+import { assertProjectReleaseReady, disablePresetSigning, isSafeMacExecutableName, loadConfig, patchMacReleaseVersion, SHA_RE, VERSION_RE } from "./lib.mjs";
 
-const [command] = process.argv.slice(2);
+const [command, argument] = process.argv.slice(2);
 
 if (command === "outputs") {
   const config = await loadConfig();
@@ -34,6 +34,11 @@ if (command === "outputs") {
   const config = await loadConfig();
   const presetFile = path.resolve(process.env.PROJECT_PATH ?? config.projectPath, "export_presets.cfg");
   await writeFile(presetFile, disablePresetSigning(await readFile(presetFile, "utf8"), config.mac.preset));
+} else if (command === "set-mac-version") {
+  const config = await loadConfig();
+  const releaseVersion = argument ?? process.env.RELEASE_VERSION ?? "";
+  const presetFile = path.resolve(process.env.PROJECT_PATH ?? config.projectPath, "export_presets.cfg");
+  await writeFile(presetFile, patchMacReleaseVersion(await readFile(presetFile, "utf8"), config.mac.preset, releaseVersion));
 } else if (command === "resolve-release") {
   const event = process.env.RELEASE_EVENT ?? "";
   const head = (process.env.RELEASE_HEAD ?? "").toLowerCase();
@@ -58,6 +63,8 @@ if (command === "outputs") {
   const output = process.env.GITHUB_OUTPUT;
   if (!output) throw new Error("GITHUB_OUTPUT is not set");
   await appendFile(output, `version=${version}\ncommit=${head}\nresume=${resume}\n`);
+} else if (command === "validate-executable-name") {
+  if (!isSafeMacExecutableName(argument)) throw new Error("Mac bundle executable name is unsafe");
 } else {
-  throw new Error("usage: config.mjs outputs|check-project|disable-signing|resolve-release");
+  throw new Error("usage: config.mjs outputs|check-project|disable-signing|set-mac-version <version>|resolve-release|validate-executable-name <name>");
 }

@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "games": {
+    "astro-bro": {
+      "repository": "judaheland-dev/astrobro",
+      "config": "release/public-games/configs/astro-bro.json",
+      "bundleIdentifier": "com.gregeland.astrobro"
+    },
+    "tower-defense": {
+      "repository": "judaheland-dev/tower-defense",
+      "config": "release/public-games/configs/tower-defense.json",
+      "bundleIdentifier": "com.gregeland.towerdefense"
+    },
+    "racing-maze": {
+      "repository": "judaheland-dev/race-maze",
+      "config": "release/public-games/configs/racing-maze.json",
+      "bundleIdentifier": "com.gregeland.racingmaze"
+    }
+  }
+}
