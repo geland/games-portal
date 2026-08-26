@@ -19,7 +19,7 @@
     <link rel="stylesheet" href="/styles.css">
     <script src="/app.js" defer></script>
   </head>
-  <body>
+  <body id="top">
     <a class="skip-link" href="#games">Skip to games</a>
     <header class="site-header">
       <a class="brand" href="/" aria-label="Gregeland Games home">
@@ -27,31 +27,17 @@
         <span>Gregeland <strong>Games</strong></span>
       </a>
       <nav aria-label="Primary navigation">
-        <a href="#games">Games</a>
-        <a href="#motion">Motion lab</a>
-        <a href="#about">About</a>
+        <a href="#games">Game library</a>
+        <a href="/tracker">Motion tracker</a>
       </nav>
     </header>
 
     <main>
       <section class="hero" aria-labelledby="hero-title">
         <div class="hero-copy">
-          <p class="eyebrow"><span></span> Built at home. Played together.</p>
-          <h1 id="hero-title">Our family arcade,<br><em>open for game night.</em></h1>
-          <p class="hero-text">Spaceships, mazes, tactical battles, cartoon butts, and games that can see you move. Everything here was made by Greg and the kids.</p>
-          <div class="hero-actions">
-            <a class="button button-primary" href="#games">Choose a game <span aria-hidden="true">↓</span></a>
-            <a class="button button-quiet" href="/tracker">Open motion tracker</a>
-          </div>
-        </div>
-        <div class="hero-cabinet" aria-hidden="true">
-          <div class="cabinet-top"><span>G</span><span>G</span></div>
-          <div class="cabinet-screen">
-            <div class="pixel-stars"></div>
-            <div class="pixel-ship">▲</div>
-            <div class="screen-copy">PRESS<br>PLAY</div>
-          </div>
-          <div class="cabinet-controls"><i></i><b></b><b></b></div>
+          <p class="eyebrow"><span></span> Gregeland Games</p>
+          <h1 id="hero-title">Games we made.</h1>
+          <p class="hero-text">Choose a game to play in your browser or download for Mac.</p>
         </div>
       </section>
 
@@ -120,46 +106,44 @@
             </div>
           </article>
 
-        </div>
-      </section>
+          <article class="game-card card-dodge" data-platforms="browser motion">
+            <div class="card-art" aria-hidden="true"><span class="art-dodge">●</span><i></i><i></i><i></i></div>
+            <div class="card-body">
+              <p class="card-kicker">Motion game · Browser</p>
+              <h3>Motion Dodge</h3>
+              <p>Use the webcam to duck, jump, punch, and weave through a neon obstacle course.</p>
+              <div class="card-links"><a href="/play/web-dodge">Play in browser</a></div>
+            </div>
+          </article>
 
-      <section class="motion-section" id="motion" aria-labelledby="motion-title">
-        <div class="motion-intro">
-          <p class="eyebrow"><span></span> Camera-powered play</p>
-          <h2 id="motion-title">Your body is<br>the controller.</h2>
-          <p>The Motion Lab uses on-device pose tracking. Camera frames stay in your browser; movement becomes the input.</p>
-          <a class="text-link" href="/tracker">Launch the motion tracker <span aria-hidden="true">↗</span></a>
-        </div>
-        <div class="motion-games">
-          <article data-platforms="browser motion">
-            <span class="motion-number">01</span>
-            <div><h3>Motion Dodge</h3><p>Duck, jump, punch, and weave through a neon obstacle course.</p></div>
-            <a aria-label="Play Motion Dodge" href="/play/web-dodge">Play <span aria-hidden="true">↗</span></a>
+          <article class="game-card card-balloon" data-platforms="mac motion">
+            <div class="card-art" aria-hidden="true"><span class="art-balloon"></span></div>
+            <div class="card-body">
+              <p class="card-kicker">Motion game · Mac + browser tracker</p>
+              <h3>Motion Balloon</h3>
+              <p>Keep the balloon in the air using your hands, head, and feet.</p>
+              <div class="card-links"><a href="/download/balloon/mac">Download for Mac</a><a href="/tracker">Open tracker</a></div>
+            </div>
           </article>
-          <article data-platforms="mac motion">
-            <span class="motion-number">02</span>
-            <div><h3>Motion Balloon</h3><p>Keep the balloon in the air using your hands, head, and feet.</p></div>
-            <a aria-label="Download Motion Balloon for Mac" href="/download/balloon/mac">Mac <span aria-hidden="true">↓</span></a>
-          </article>
-          <article data-platforms="mac motion">
-            <span class="motion-number">03</span>
-            <div><h3>Motion Labyrinth</h3><p>Lean and balance your way through a living-room-sized marble maze.</p></div>
-            <a aria-label="Download Motion Labyrinth for Mac" href="/download/labyrinth/mac">Mac <span aria-hidden="true">↓</span></a>
-          </article>
-        </div>
-      </section>
 
-      <section class="about" id="about" aria-labelledby="about-title">
-        <p class="eyebrow"><span></span> Why this exists</p>
-        <h2 id="about-title">Games are better when the people who play them can help make them.</h2>
-        <p>Gregeland Games is our shelf for experiments that grew into real games. We build them, argue about the rules, test them on the couch, and keep the versions worth remembering.</p>
+          <article class="game-card card-labyrinth" data-platforms="mac motion">
+            <div class="card-art" aria-hidden="true"><span class="art-maze"></span><i></i></div>
+            <div class="card-body">
+              <p class="card-kicker">Motion game · Mac + browser tracker</p>
+              <h3>Motion Labyrinth</h3>
+              <p>Lean and balance your way through a living-room-sized marble maze.</p>
+              <div class="card-links"><a href="/download/labyrinth/mac">Download for Mac</a><a href="/tracker">Open tracker</a></div>
+            </div>
+          </article>
+
+        </div>
       </section>
     </main>
 
     <footer>
       <span>Gregeland Games</span>
       <p>Built at home · <span id="year">2026</span></p>
-      <a href="#hero-title">Back to top ↑</a>
+      <a href="#top">Back to top ↑</a>
     </footer>
   </body>
 </html>
