@@ -98,14 +98,14 @@ test("Mac release versions are injected into both bundle version fields", () => 
   assert.throws(() => patchMacReleaseVersion(source, "macOS", "2.3.4"), /vMAJOR/);
 });
 
-test("temporary R2 credentials carry path and operation scope", () => {
+test("temporary R2 credentials carry path scope and expire", () => {
   const creds = createScopedR2Credentials({
     accountId: "a".repeat(32), accessKeyId: "access", secretAccessKey: "secret", bucket: "games",
     prefixes: ["releases/astro-bro/v1.0.0/"], now: 100, ttlSeconds: 900
   });
   const jwt = Buffer.from(creds.sessionToken, "base64").toString().slice(4);
   const claims = JSON.parse(Buffer.from(jwt.split(".")[1], "base64url").toString());
-  assert.deepEqual(claims.actions, ["HeadObject", "GetObject", "PutObject"]);
+  assert.equal(claims.actions, undefined);
   assert.deepEqual(claims.paths.prefixPaths, ["releases/astro-bro/v1.0.0/"]);
   assert.equal(claims.exp, 1000);
 });

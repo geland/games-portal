@@ -267,7 +267,6 @@ export function createScopedR2Credentials({ accountId, accessKeyId, secretAccess
   const claims = base64url(JSON.stringify({
     bucket,
     scope: "object-read-write",
-    actions: ["HeadObject", "GetObject", "PutObject"],
     paths: { prefixPaths: prefixes, objectPaths: [] },
     sub: accountId,
     iss: accessKeyId,
