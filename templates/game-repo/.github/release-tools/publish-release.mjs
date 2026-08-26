@@ -32,6 +32,7 @@ let manifestPrefix;
 
 export const STABLE_MANIFEST_MAX_BYTES = 32_768;
 export const REMOTE_JSON_MAX_BYTES = 1_048_576;
+export const PUBLIC_ORIGIN_USER_AGENT = "Gregeland-Games-Release-Publisher/1.0 (+https://games.gregeland.com)";
 
 export async function main() {
   const config = await loadConfig();
@@ -604,7 +605,11 @@ async function verifyPublicFiles(publicBase, files) {
     for (const delay of [0, 500, 1_000, 2_000, 4_000, 8_000]) {
       if (delay) await new Promise((resolve) => setTimeout(resolve, delay));
       try {
-        const response = await fetch(new URL(`/${file.key}`, publicBase), { method: "HEAD", redirect: "error" });
+        const response = await fetch(new URL(`/${file.key}`, publicBase), {
+          method: "HEAD",
+          redirect: "error",
+          headers: { "user-agent": PUBLIC_ORIGIN_USER_AGENT }
+        });
         lastStatus = String(response.status);
         if (response.ok && response.headers.get("content-type")?.toLowerCase().startsWith(expectedType)) {
           lastStatus = "ok";
@@ -622,7 +627,11 @@ async function verifyPublicFiles(publicBase, files) {
 
 async function verifyPublicOriginIsUncached(publicBase, files) {
   for (const key of buildCacheProbeKeys(files, version, sourceCommit)) {
-    const response = await fetch(new URL(`/${key}`, publicBase), { method: "HEAD", redirect: "error" });
+    const response = await fetch(new URL(`/${key}`, publicBase), {
+      method: "HEAD",
+      redirect: "error",
+      headers: { "user-agent": PUBLIC_ORIGIN_USER_AGENT }
+    });
     assertUncachedOriginResponse({
       key,
       status: response.status,
