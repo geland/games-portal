@@ -25,6 +25,29 @@ test("private releases resolve only fixed repositories and profiles", async () =
   assert.equal(release.macEnabled, false);
   assert.equal(release.candidateMacEnabled, true);
   assert.equal(release.webArtifactName, "butts-v1.2.3-web-gpkg");
+  assert.equal(release.webPackageFilename, "butts-v1.2.3-web.gpkg");
+  assert.deepEqual(release.candidateArtifactNames, ["butts-v1.2.3-web-gpkg", "butts-v1.2.3-mac-gpkg"]);
+});
+
+test("Motion targets resolve one package from their shared exact-tag run", async () => {
+  const release = await resolvePrivateRelease({
+    registryFile,
+    gameId: "motion-tracker",
+    sourceSha: sha,
+    version: "v2.3.4",
+    profile: "web",
+    buildRunId: "32922696256",
+    resume: "false"
+  });
+  assert.equal(release.repository, "geland/motion-games");
+  assert.equal(release.sourceWorkflow, ".github/workflows/static-release-candidates.yml");
+  assert.equal(release.sourceWorkflowName, "Static candidates from v2.3.4 (push)");
+  assert.equal(release.webArtifactName, `motion-tracker-v2.3.4-${sha.slice(0, 12)}-web`);
+  assert.equal(release.webPackageFilename, `${release.webArtifactName}.gpkg`);
+  assert.deepEqual(release.candidateArtifactNames, [
+    `web-dodge-v2.3.4-${sha.slice(0, 12)}-web`,
+    `motion-tracker-v2.3.4-${sha.slice(0, 12)}-web`
+  ]);
 });
 
 test("private release identities are strict", async () => {

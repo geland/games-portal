@@ -3,6 +3,10 @@ const SHA_RE = /^[0-9a-f]{40}$/;
 const VERSION_RE = /^v(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)$/;
 const DIGEST_RE = /^sha256:[0-9a-f]{64}$/;
 const MAX_ARTIFACT_BYTES = 5 * 1024 * 1024 * 1024;
+const APPROVED_WORKFLOWS = new Map([
+  [".github/workflows/release.yml", () => "Build game release candidate"],
+  [".github/workflows/static-release-candidates.yml", (version) => `Static candidates from ${version} (push)`]
+]);
 
 function object(value, label) {
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error(`${label} must be an object`);
@@ -21,11 +25,12 @@ export function validateCandidateRun(runValue, expectedValue) {
   if (!SHA_RE.test(expected.sourceSha ?? "")) throw new Error("expected source SHA is invalid");
   if (!VERSION_RE.test(expected.version ?? "")) throw new Error("expected version is invalid");
   positiveInteger(expected.runId, "expected run ID");
-  if (expected.workflow !== ".github/workflows/release.yml") throw new Error("expected workflow path is invalid");
+  const expectedName = APPROVED_WORKFLOWS.get(expected.workflow)?.(expected.version);
+  if (!expectedName || expectedName !== expected.workflowName) throw new Error("expected workflow identity is invalid");
 
   if (run.id !== expected.runId) throw new Error("candidate run ID does not match");
   if (object(run.repository, "candidate repository").full_name !== expected.repository) throw new Error("candidate repository does not match");
-  if (run.name !== "Build game release candidate") throw new Error("candidate workflow name does not match");
+  if (run.name !== expected.workflowName) throw new Error("candidate workflow name does not match");
   if (run.path !== expected.workflow) throw new Error("candidate workflow path does not match");
   if (run.event !== "push") throw new Error("publishable candidate must be triggered by an exact version tag push");
   if (run.head_sha !== expected.sourceSha) throw new Error("candidate run source SHA does not match");
@@ -64,17 +69,27 @@ export function selectCandidateArtifacts(responseValue, expectedValue) {
   const expectedNames = [];
   if (expected.candidateWebEnabled) expectedNames.push(expected.webArtifactName);
   if (expected.candidateMacEnabled) expectedNames.push(expected.macArtifactName);
-  if (expectedNames.length === 0 || expectedNames.some((name) => typeof name !== "string" || !/^[a-z0-9][a-z0-9.+-]{0,199}-gpkg$/.test(name))) {
+  const allExpectedNames = expected.candidateArtifactNames;
+  const validName = (name) => typeof name === "string" && /^[a-z0-9][a-z0-9.+-]{0,199}$/.test(name);
+  if (expectedNames.length === 0 || expectedNames.some((name) => !validName(name))) {
     throw new Error("expected candidate artifact names are invalid");
+  }
+  if (!Array.isArray(allExpectedNames)
+      || allExpectedNames.length === 0
+      || allExpectedNames.length > 10
+      || allExpectedNames.some((name) => !validName(name))
+      || new Set(allExpectedNames).size !== allExpectedNames.length
+      || expectedNames.some((name) => !allExpectedNames.includes(name))) {
+    throw new Error("complete candidate artifact names are invalid");
   }
   if (!Array.isArray(response.artifacts)) throw new Error("candidate artifacts must be an array");
   if (response.total_count !== response.artifacts.length) throw new Error("candidate artifact response is incomplete");
-  if (response.artifacts.length !== expectedNames.length) throw new Error("candidate run has an unexpected artifact count");
+  if (response.artifacts.length !== allExpectedNames.length) throw new Error("candidate run has an unexpected artifact count");
 
   const selected = new Map();
   for (const artifactValue of response.artifacts) {
     const artifact = object(artifactValue, "candidate artifact");
-    if (!expectedNames.includes(artifact.name) || selected.has(artifact.name)) throw new Error("candidate run has an unexpected or duplicate artifact");
+    if (!allExpectedNames.includes(artifact.name) || selected.has(artifact.name)) throw new Error("candidate run has an unexpected or duplicate artifact");
     positiveInteger(artifact.id, "candidate artifact ID");
     if (!Number.isSafeInteger(artifact.size_in_bytes) || artifact.size_in_bytes <= 0 || artifact.size_in_bytes > MAX_ARTIFACT_BYTES) {
       throw new Error("candidate artifact size is invalid");

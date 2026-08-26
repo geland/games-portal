@@ -1,0 +1,16 @@
+{
+  "slug": "web-dodge",
+  "projectPath": ".",
+  "godotVersion": "4.6.2",
+  "web": {
+    "enabled": true,
+    "preset": "Static",
+    "entry": "dodge.html"
+  },
+  "mac": {
+    "enabled": false,
+    "preset": "macOS",
+    "bundleName": "Motion Dodge",
+    "entitlements": null
+  }
+}

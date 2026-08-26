@@ -4,12 +4,23 @@ import { isSafeRelativePath, loadConfig, SHA_RE, VERSION_RE } from "../../../tem
 
 export const PRIVATE_REPOSITORIES = new Map([
   ["butts", "geland/butts"],
-  ["blend-in", "geland/blend-in"]
+  ["blend-in", "geland/blend-in"],
+  ["web-dodge", "geland/motion-games"],
+  ["motion-tracker", "geland/motion-games"]
 ]);
 
 export const PRIVATE_PROFILES = new Map([
   ["butts", ["web", "web+mac"]],
-  ["blend-in", ["mac"]]
+  ["blend-in", ["mac"]],
+  ["web-dodge", ["web"]],
+  ["motion-tracker", ["web"]]
+]);
+
+const PRIVATE_WORKFLOWS = new Map([
+  ["butts", { path: ".github/workflows/release.yml", name: "Build game release candidate", packageStyle: "standard" }],
+  ["blend-in", { path: ".github/workflows/release.yml", name: "Build game release candidate", packageStyle: "standard" }],
+  ["web-dodge", { path: ".github/workflows/static-release-candidates.yml", name: null, packageStyle: "motion-static" }],
+  ["motion-tracker", { path: ".github/workflows/static-release-candidates.yml", name: null, packageStyle: "motion-static" }]
 ]);
 
 const PROFILE_TARGETS = new Map([
@@ -85,12 +96,32 @@ export async function resolvePrivateRelease({ registryFile, gameId, sourceSha, v
   if (targets.web && !config.web.enabled) throw new Error("selected release profile requires a disabled Web target");
   if (targets.mac && !config.mac.enabled) throw new Error("selected release profile requires a disabled Mac target");
 
+  const workflow = PRIVATE_WORKFLOWS.get(gameId);
+  let webArtifactName = config.web.enabled ? `${config.slug}-${version}-web-gpkg` : "";
+  let webPackageFilename = config.web.enabled ? `${config.slug}-${version}-web.gpkg` : "";
+  let macArtifactName = config.mac.enabled ? `${config.slug}-${version}-mac-gpkg` : "";
+  let macPackageFilename = config.mac.enabled ? `${config.slug}-${version}-mac.gpkg` : "";
+  let candidateArtifactNames = [webArtifactName, macArtifactName].filter(Boolean);
+  if (workflow.packageStyle === "motion-static") {
+    const sourceAbbreviation = sourceSha.slice(0, 12);
+    const motionStem = (slug) => `${slug}-${version}-${sourceAbbreviation}-web`;
+    webArtifactName = motionStem(config.slug);
+    webPackageFilename = `${webArtifactName}.gpkg`;
+    macArtifactName = "";
+    macPackageFilename = "";
+    candidateArtifactNames = [motionStem("web-dodge"), motionStem("motion-tracker")];
+  }
+  const sourceWorkflowName = workflow.packageStyle === "motion-static"
+    ? `Static candidates from ${version} (push)`
+    : workflow.name;
+
   return {
     gameId,
     repository: game.repository,
     configPath: game.config,
     configFile,
-    sourceWorkflow: ".github/workflows/release.yml",
+    sourceWorkflow: workflow.path,
+    sourceWorkflowName,
     sourceSha,
     version,
     profile,
@@ -107,8 +138,11 @@ export async function resolvePrivateRelease({ registryFile, gameId, sourceSha, v
     bundleIdentifier: game.bundleIdentifier,
     candidateWebEnabled: config.web.enabled,
     candidateMacEnabled: config.mac.enabled,
-    webArtifactName: config.web.enabled ? `${config.slug}-${version}-web-gpkg` : "",
-    macArtifactName: config.mac.enabled ? `${config.slug}-${version}-mac-gpkg` : ""
+    webArtifactName,
+    webPackageFilename,
+    macArtifactName,
+    macPackageFilename,
+    candidateArtifactNames
   };
 }
 

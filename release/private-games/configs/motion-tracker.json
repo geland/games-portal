@@ -1,0 +1,16 @@
+{
+  "slug": "motion-tracker",
+  "projectPath": ".",
+  "godotVersion": "4.6.2",
+  "web": {
+    "enabled": true,
+    "preset": "Static",
+    "entry": "index.html"
+  },
+  "mac": {
+    "enabled": false,
+    "preset": "macOS",
+    "bundleName": "Motion Tracker",
+    "entitlements": null
+  }
+}

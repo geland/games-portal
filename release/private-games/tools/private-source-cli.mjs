@@ -20,6 +20,7 @@ if (command === "resolve") {
     game_id: release.gameId,
     source_repository: release.repository,
     source_workflow: release.sourceWorkflow,
+    source_workflow_name: release.sourceWorkflowName,
     source_sha: release.sourceSha,
     version: release.version,
     profile: release.profile,
@@ -36,7 +37,10 @@ if (command === "resolve") {
     candidate_web_enabled: String(release.candidateWebEnabled),
     candidate_mac_enabled: String(release.candidateMacEnabled),
     web_artifact_name: release.webArtifactName,
-    mac_artifact_name: release.macArtifactName
+    web_package_filename: release.webPackageFilename,
+    mac_artifact_name: release.macArtifactName,
+    mac_package_filename: release.macPackageFilename,
+    candidate_artifact_names_json: JSON.stringify(release.candidateArtifactNames)
   };
   await appendFile(required("GITHUB_OUTPUT"), Object.entries(values).map(([key, value]) => `${key}=${value}\n`).join(""));
 } else if (command === "write-effective-config") {

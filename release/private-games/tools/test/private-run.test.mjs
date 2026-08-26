@@ -35,7 +35,14 @@ function artifact(id, name, overrides = {}) {
   };
 }
 
-const expectedRun = { repository, runId, sourceSha, version, workflow: ".github/workflows/release.yml" };
+const expectedRun = {
+  repository,
+  runId,
+  sourceSha,
+  version,
+  workflow: ".github/workflows/release.yml",
+  workflowName: "Build game release candidate"
+};
 
 test("candidate run requires a successful exact tag build", () => {
   assert.equal(validateCandidateRun(run(), expectedRun).head_sha, sourceSha);
@@ -70,6 +77,7 @@ test("candidate artifact set is complete, bounded, and tied to the run", () => {
   const selected = selectCandidateArtifacts(response, {
     runId,
     sourceSha,
+    candidateArtifactNames: ["butts-v1.2.3-web-gpkg", "butts-v1.2.3-mac-gpkg"],
     candidateWebEnabled: true,
     candidateMacEnabled: true,
     webArtifactName: "butts-v1.2.3-web-gpkg",
@@ -83,6 +91,7 @@ test("candidate artifact validation rejects hidden, expired, or mismatched data"
   const expected = {
     runId,
     sourceSha,
+    candidateArtifactNames: ["butts-v1.2.3-web-gpkg"],
     candidateWebEnabled: true,
     candidateMacEnabled: false,
     webArtifactName: "butts-v1.2.3-web-gpkg",
@@ -92,4 +101,61 @@ test("candidate artifact validation rejects hidden, expired, or mismatched data"
   assert.throws(() => selectCandidateArtifacts({ total_count: 1, artifacts: [artifact(10, expected.webArtifactName, { expired: true })] }, expected), /expired/);
   assert.throws(() => selectCandidateArtifacts({ total_count: 1, artifacts: [artifact(10, expected.webArtifactName, { digest: null })] }, expected), /digest/);
   assert.throws(() => selectCandidateArtifacts({ total_count: 1, artifacts: [artifact(10, expected.webArtifactName, { workflow_run: { id: 99, head_sha: sourceSha } })] }, expected), /identity/);
+});
+
+test("a shared Motion run must contain both exact packages while selecting one", () => {
+  const shortSha = sourceSha.slice(0, 12);
+  const dodge = `web-dodge-${version}-${shortSha}-web`;
+  const tracker = `motion-tracker-${version}-${shortSha}-web`;
+  const motionRun = run({
+    repository: { full_name: "geland/motion-games" },
+    name: `Static candidates from ${version} (push)`,
+    path: ".github/workflows/static-release-candidates.yml"
+  });
+  assert.equal(validateCandidateRun(motionRun, {
+    repository: "geland/motion-games",
+    runId,
+    sourceSha,
+    version,
+    workflow: ".github/workflows/static-release-candidates.yml",
+    workflowName: `Static candidates from ${version} (push)`
+  }).path, ".github/workflows/static-release-candidates.yml");
+  const selected = selectCandidateArtifacts({
+    total_count: 2,
+    artifacts: [artifact(20, dodge), artifact(21, tracker)]
+  }, {
+    runId,
+    sourceSha,
+    candidateArtifactNames: [dodge, tracker],
+    candidateWebEnabled: true,
+    candidateMacEnabled: false,
+    webArtifactName: tracker,
+    macArtifactName: ""
+  });
+  assert.equal(selected.web.id, 21);
+  const selectedDodge = selectCandidateArtifacts({
+    total_count: 2,
+    artifacts: [artifact(20, dodge), artifact(21, tracker)]
+  }, {
+    runId,
+    sourceSha,
+    candidateArtifactNames: [dodge, tracker],
+    candidateWebEnabled: true,
+    candidateMacEnabled: false,
+    webArtifactName: dodge,
+    macArtifactName: ""
+  });
+  assert.equal(selectedDodge.web.id, 20);
+  assert.throws(() => selectCandidateArtifacts({
+    total_count: 1,
+    artifacts: [artifact(20, dodge)]
+  }, {
+    runId,
+    sourceSha,
+    candidateArtifactNames: [dodge, tracker],
+    candidateWebEnabled: true,
+    candidateMacEnabled: false,
+    webArtifactName: dodge,
+    macArtifactName: ""
+  }), /unexpected artifact count/);
 });

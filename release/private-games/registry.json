@@ -12,6 +12,18 @@
       "config": "release/private-games/configs/blend-in.json",
       "bundleIdentifier": "com.gregeland.blendin",
       "profiles": ["mac"]
+    },
+    "web-dodge": {
+      "repository": "geland/motion-games",
+      "config": "release/private-games/configs/web-dodge.json",
+      "bundleIdentifier": "com.gregeland.motiondodge",
+      "profiles": ["web"]
+    },
+    "motion-tracker": {
+      "repository": "geland/motion-games",
+      "config": "release/private-games/configs/motion-tracker.json",
+      "bundleIdentifier": "com.gregeland.motiontracker",
+      "profiles": ["web"]
     }
   }
 }

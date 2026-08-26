@@ -11,6 +11,8 @@ on:
         options:
           - butts
           - blend-in
+          - web-dodge
+          - motion-tracker
       source_sha:
         description: Exact lowercase 40-character source commit SHA
         required: true
@@ -53,6 +55,7 @@ jobs:
       game_id: ${{ steps.release.outputs.game_id }}
       source_repository: ${{ steps.release.outputs.source_repository }}
       source_workflow: ${{ steps.release.outputs.source_workflow }}
+      source_workflow_name: ${{ steps.release.outputs.source_workflow_name }}
       source_sha: ${{ steps.release.outputs.source_sha }}
       version: ${{ steps.release.outputs.version }}
       profile: ${{ steps.release.outputs.profile }}
@@ -69,7 +72,10 @@ jobs:
       candidate_web_enabled: ${{ steps.release.outputs.candidate_web_enabled }}
       candidate_mac_enabled: ${{ steps.release.outputs.candidate_mac_enabled }}
       web_artifact_name: ${{ steps.release.outputs.web_artifact_name }}
+      web_package_filename: ${{ steps.release.outputs.web_package_filename }}
       mac_artifact_name: ${{ steps.release.outputs.mac_artifact_name }}
+      mac_package_filename: ${{ steps.release.outputs.mac_package_filename }}
+      candidate_artifact_names_json: ${{ steps.release.outputs.candidate_artifact_names_json }}
     steps:
       - name: Check out the trusted portal commit
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
@@ -181,6 +187,7 @@ jobs:
         env:
           SOURCE_REPOSITORY: ${{ needs.authorize.outputs.source_repository }}
           SOURCE_WORKFLOW: ${{ needs.authorize.outputs.source_workflow }}
+          SOURCE_WORKFLOW_NAME: ${{ needs.authorize.outputs.source_workflow_name }}
           SOURCE_SHA: ${{ needs.authorize.outputs.source_sha }}
           RELEASE_VERSION: ${{ needs.authorize.outputs.version }}
           BUILD_RUN_ID: ${{ needs.authorize.outputs.build_run_id }}
@@ -188,6 +195,7 @@ jobs:
           CANDIDATE_MAC_ENABLED: ${{ needs.authorize.outputs.candidate_mac_enabled }}
           WEB_ARTIFACT_NAME: ${{ needs.authorize.outputs.web_artifact_name }}
           MAC_ARTIFACT_NAME: ${{ needs.authorize.outputs.mac_artifact_name }}
+          CANDIDATE_ARTIFACT_NAMES_JSON: ${{ needs.authorize.outputs.candidate_artifact_names_json }}
           PRIVATE_ACTIONS_READ_TOKEN: ${{ secrets.PRIVATE_ACTIONS_READ_TOKEN }}
         run: node "${PRIVATE_TOOL_ROOT}/private-run-cli.mjs" verify
 
@@ -207,7 +215,7 @@ jobs:
         if: needs.authorize.outputs.web_enabled == 'true'
         env:
           ARTIFACT_KIND: web
-          ARTIFACT_PACKAGE: ${{ runner.temp }}/gregeland-private-download/web/${{ needs.authorize.outputs.slug }}-${{ needs.authorize.outputs.version }}-web.gpkg
+          ARTIFACT_PACKAGE: ${{ runner.temp }}/gregeland-private-download/web/${{ needs.authorize.outputs.web_package_filename }}
           ARTIFACT_OUTPUT: ${{ runner.temp }}/gregeland-private-release/web
           GAME_SLUG: ${{ needs.authorize.outputs.slug }}
           RELEASE_VERSION: ${{ needs.authorize.outputs.version }}
@@ -231,7 +239,7 @@ jobs:
         if: needs.authorize.outputs.mac_enabled == 'true'
         env:
           ARTIFACT_KIND: mac
-          ARTIFACT_PACKAGE: ${{ runner.temp }}/gregeland-private-download/mac/${{ needs.authorize.outputs.slug }}-${{ needs.authorize.outputs.version }}-mac.gpkg
+          ARTIFACT_PACKAGE: ${{ runner.temp }}/gregeland-private-download/mac/${{ needs.authorize.outputs.mac_package_filename }}
           ARTIFACT_OUTPUT: ${{ runner.temp }}/gregeland-private-release/macos
           GAME_SLUG: ${{ needs.authorize.outputs.slug }}
           RELEASE_VERSION: ${{ needs.authorize.outputs.version }}

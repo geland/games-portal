@@ -22,7 +22,7 @@ test("private publication is manual-only and repository choices are fixed", () =
   const trigger = workflow.slice(workflow.indexOf("on:\n"), workflow.indexOf("permissions:\n"));
   assert.match(trigger, /workflow_dispatch:/);
   assert.doesNotMatch(trigger, /\bpush:|pull_request:|schedule:/);
-  for (const game of ["butts", "blend-in"]) assert.match(trigger, new RegExp(`^          - ${game}$`, "m"));
+  for (const game of ["butts", "blend-in", "web-dodge", "motion-tracker"]) assert.match(trigger, new RegExp(`^          - ${game}$`, "m"));
   assert.doesNotMatch(trigger, /^          - commanders$/m);
   assert.doesNotMatch(trigger, /repository:/);
 });
@@ -57,6 +57,8 @@ test("production receives only constrained candidate data", () => {
   assert.match(production, /MAC_ENTITLEMENTS:.*mac_entitlements != '' && format\('\{0\}\/trusted\/\{1\}'[^\n]+\|\| ''/);
   assert.match(runVerifier, /\/git\/ref\/tags\//);
   assert.match(runVerifier, /\/git\/ref\/heads\//);
+  assert.match(production, /CANDIDATE_ARTIFACT_NAMES_JSON:/);
+  assert.match(production, /web_package_filename/);
   assert.ok(runVerifier.indexOf("/git/ref/tags/") < runVerifier.indexOf("/actions/runs/"));
 });
 

@@ -13,6 +13,12 @@ artifact set, artifact digests, and the identity and byte layout inside every
 package before signing or publication. It never checks out or executes private
 source.
 
+`web-dodge` and `motion-tracker` share one `geland/motion-games` tag workflow
+run. Each central release selects only its exact SHA-qualified package, while
+the verifier requires both expected run artifacts to be present and rejects
+any extra, missing, renamed, or expired artifact. Commanders is not on this
+allowlist.
+
 A manually dispatched candidate is useful for validation but is deliberately
 ineligible for publication. Publishable candidates must come from an exact
 `vMAJOR.MINOR.PATCH` tag so GitHub independently records the source SHA used by

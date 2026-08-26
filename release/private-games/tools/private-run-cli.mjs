@@ -42,13 +42,15 @@ validateCandidateRun(run, {
   runId,
   sourceSha,
   version,
-  workflow: required("SOURCE_WORKFLOW")
+  workflow: required("SOURCE_WORKFLOW"),
+  workflowName: required("SOURCE_WORKFLOW_NAME")
 });
 
 const artifactsResponse = await fetchJson(`${apiRoot}/actions/runs/${runId}/artifacts?per_page=100`, headers);
 const selected = selectCandidateArtifacts(artifactsResponse, {
   runId,
   sourceSha,
+  candidateArtifactNames: requiredArtifactNames("CANDIDATE_ARTIFACT_NAMES_JSON"),
   candidateWebEnabled: requiredBoolean("CANDIDATE_WEB_ENABLED"),
   candidateMacEnabled: requiredBoolean("CANDIDATE_MAC_ENABLED"),
   webArtifactName: process.env.WEB_ARTIFACT_NAME ?? "",
@@ -83,4 +85,16 @@ function requiredBoolean(name) {
   const value = required(name);
   if (value !== "true" && value !== "false") throw new Error(`${name} must be true or false`);
   return value === "true";
+}
+
+function requiredArtifactNames(name) {
+  const raw = required(name);
+  let value;
+  try {
+    value = JSON.parse(raw);
+  } catch {
+    throw new Error(`${name} must be JSON`);
+  }
+  if (!Array.isArray(value)) throw new Error(`${name} must be a JSON array`);
+  return value;
 }
