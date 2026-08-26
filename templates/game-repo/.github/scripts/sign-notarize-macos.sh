@@ -142,7 +142,7 @@ xcrun notarytool submit "${NOTARY_ZIP}" \
   --key "${P8_FILE}" \
   --key-id "${APPLE_NOTARY_KEY_ID}" \
   --issuer "${APPLE_NOTARY_ISSUER_ID}" \
-  --wait --timeout 45m --output-format json > "${NOTARY_RESULT}"
+  --wait --timeout 75m --output-format json > "${NOTARY_RESULT}" 2>&1
 NOTARY_EXIT=$?
 set -e
 if [[ "${NOTARY_EXIT}" != "0" || "$(plutil -extract status raw -o - "${NOTARY_RESULT}" 2>/dev/null || true)" != "Accepted" ]]; then

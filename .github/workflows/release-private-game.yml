@@ -121,7 +121,7 @@ jobs:
     name: Verify, sign, and publish candidate data
     needs: authorize
     runs-on: macos-15
-    timeout-minutes: 90
+    timeout-minutes: 120
     permissions:
       contents: read
     environment:
