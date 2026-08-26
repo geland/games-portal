@@ -52,15 +52,13 @@ repository cannot enforce the branch and environment restrictions, do not
 store the release secrets or run this privileged workflow. Code in this
 repository cannot prove that those external GitHub settings are enabled.
 
-Astro Bro is enabled for both Web and signed/notarized Mac releases. Racing
-Maze is Mac-only; Web additionally requires its separate
+Astro Bro and Tower Defense are enabled for both Web and signed/notarized Mac
+releases. Racing Maze is Mac-only; Web additionally requires its separate
 compatibility/performance gate. A Web configuration does not replace physical
 Safari/controller/audio acceptance testing.
-
-Tower Defense is deliberately absent from the release allowlist while its
-publication hold is active. Its public repository may run credential-free
-validation, but this dispatcher cannot publish it. Racing Maze's selected
-baseline is present on its public remote.
+Tower Defense's source repository runs its placement regression during the
+unprivileged build, before any production credential is available. Racing
+Maze's selected baseline is present on its public remote.
 
 ## Required protected environment
 

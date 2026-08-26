@@ -25,8 +25,7 @@ test("central public release is manual-only with a fixed choice", () => {
   assert.match(trigger, /workflow_dispatch:/);
   assert.doesNotMatch(trigger, /\bpush:|pull_request:|schedule:/);
   const choices = [...trigger.matchAll(/^          - (.+)$/gm)].map((match) => match[1]);
-  assert.deepEqual(choices, ["astro-bro", "racing-maze"]);
-  assert.doesNotMatch(workflow, /^\s+- tower-defense\s*$/m);
+  assert.deepEqual(choices, ["astro-bro", "racing-maze", "tower-defense"]);
 });
 
 test("every third-party action is pinned to a full commit", () => {
@@ -106,4 +105,9 @@ test("production job never checks out or runs public source", () => {
 test("catalog retains both enabled Astro Bro targets", () => {
   assert.match(catalog, /href="\/play\/astro-bro"/);
   assert.match(catalog, /href="\/download\/astro-bro\/mac"/);
+});
+
+test("catalog links both enabled Tower Defense targets", () => {
+  assert.match(catalog, /href="\/play\/tower-defense"/);
+  assert.match(catalog, /href="\/download\/tower-defense\/mac"/);
 });

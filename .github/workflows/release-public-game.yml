@@ -11,6 +11,7 @@ on:
         options:
           - astro-bro
           - racing-maze
+          - tower-defense
       source_sha:
         description: Exact lowercase 40-character commit SHA from the selected public repository
         required: true
