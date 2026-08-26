@@ -26,6 +26,20 @@ describe("release gateway", () => {
     expect(response.headers.get("cache-control")).toBe("no-store");
   });
 
+  it.each([
+    ["dognado", "https://judaheland-dev.github.io/dognado/"],
+    ["snake-arena", "https://judaheland-dev.github.io/snake-arena/"],
+    ["woberia", "https://judaheland-dev.github.io/janes-game/"]
+  ])("redirects the attributed external game %s through a stable portal URL", async (slug, location) => {
+    const response = await SELF.fetch(`https://games.gregeland.com/play/${slug}`, {
+      redirect: "manual"
+    });
+    expect(response.status).toBe(302);
+    expect(response.headers.get("location")).toBe(location);
+    expect(response.headers.get("cache-control")).toBe("no-store");
+    expect(response.headers.get("referrer-policy")).toBe("no-referrer");
+  });
+
   it("rejects an unsafe download target in a manifest", () => {
     expect(testable.isReleaseManifest({
       slug: "astro-bro",
