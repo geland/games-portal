@@ -54,7 +54,7 @@ test("production receives only constrained candidate data", () => {
   assert.ok(production.indexOf("private-run-cli.mjs\" verify") < production.indexOf("actions/download-artifact@"));
   assert.ok(production.indexOf("artifact-container-cli.mjs\" unpack") < production.indexOf("APPLE_DEVELOPER_ID_P12_BASE64"));
   assert.ok(production.indexOf("sign-notarize-macos.sh") < production.indexOf("publish-release.mjs"));
-  assert.match(production, /MAC_ENTITLEMENTS: .*\/trusted\/\{1\}/);
+  assert.match(production, /MAC_ENTITLEMENTS:.*mac_entitlements != '' && format\('\{0\}\/trusted\/\{1\}'[^\n]+\|\| ''/);
   assert.match(runVerifier, /\/git\/ref\/tags\//);
   assert.match(runVerifier, /\/git\/ref\/heads\//);
   assert.ok(runVerifier.indexOf("/git/ref/tags/") < runVerifier.indexOf("/actions/runs/"));

@@ -244,7 +244,7 @@ jobs:
         env:
           MAC_APP: ${{ runner.temp }}/gregeland-private-release/macos/${{ needs.authorize.outputs.mac_bundle_name }}.app
           MAC_ARCHIVE: ${{ runner.temp }}/gregeland-private-release/${{ needs.authorize.outputs.slug }}-macos-universal.zip
-          MAC_ENTITLEMENTS: ${{ needs.authorize.outputs.mac_entitlements == '' && '' || format('{0}/trusted/{1}', github.workspace, needs.authorize.outputs.mac_entitlements) }}
+          MAC_ENTITLEMENTS: ${{ needs.authorize.outputs.mac_entitlements != '' && format('{0}/trusted/{1}', github.workspace, needs.authorize.outputs.mac_entitlements) || '' }}
           MAC_EXPECTED_BUNDLE_ID: ${{ needs.authorize.outputs.bundle_identifier }}
           MAC_EXPECTED_VERSION: ${{ needs.authorize.outputs.version }}
           APPLE_DEVELOPER_ID_P12_BASE64: ${{ secrets.APPLE_DEVELOPER_ID_P12_BASE64 }}
