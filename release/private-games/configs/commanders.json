@@ -1,0 +1,16 @@
+{
+  "slug": "commanders",
+  "projectPath": ".",
+  "godotVersion": "4.6.2",
+  "web": {
+    "enabled": true,
+    "preset": "Web",
+    "entry": "index.html"
+  },
+  "mac": {
+    "enabled": true,
+    "preset": "macOS",
+    "bundleName": "Commanders",
+    "entitlements": null
+  }
+}

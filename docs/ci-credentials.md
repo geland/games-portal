@@ -32,12 +32,12 @@ Actions read, Contents read, and metadata read only. Contents read is used only
 to resolve the exact Git tag and reject a same-named branch; private source is
 never checked out or executed by the production job. The token must not grant
 contents write, workflow write, administration, or production access. The
-current repository set is exactly `geland/butts`, `geland/blend-in`, and
-`geland/motion-games`; Commanders is intentionally excluded. The central workflow accepts only
-a successful exact-version-tag run whose GitHub-recorded repository, workflow
-path, tag, and source SHA match the approved release, then downloads artifacts
-by immutable ID and verifies their server digest and constrained package
-contents without executing them.
+current repository set is exactly `geland/butts`, `geland/blend-in`,
+`geland/commanders`, and `geland/motion-games`. The central workflow accepts
+only a successful exact-version-tag run whose GitHub-recorded repository,
+workflow path, tag, and source SHA match the approved release, then downloads
+artifacts by immutable ID and verifies their server digest and constrained
+package contents without executing them.
 
 ## Judah's public repositories
 

@@ -29,6 +29,30 @@ test("private releases resolve only fixed repositories and profiles", async () =
   assert.deepEqual(release.candidateArtifactNames, ["butts-v1.2.3-web-gpkg", "butts-v1.2.3-mac-gpkg"]);
 });
 
+test("Commanders resolves exact Web and Mac candidate identities", async () => {
+  const release = await resolvePrivateRelease({
+    registryFile,
+    gameId: "commanders",
+    sourceSha: sha,
+    version: "v1.0.0",
+    profile: "web+mac",
+    buildRunId: "32920663100",
+    resume: "false"
+  });
+  assert.equal(release.repository, "geland/commanders");
+  assert.equal(release.sourceWorkflow, ".github/workflows/release.yml");
+  assert.equal(release.sourceWorkflowName, "Build game release candidate");
+  assert.equal(release.bundleIdentifier, "com.gregeland.commanders");
+  assert.equal(release.webArtifactName, "commanders-v1.0.0-web-gpkg");
+  assert.equal(release.webPackageFilename, "commanders-v1.0.0-web.gpkg");
+  assert.equal(release.macArtifactName, "commanders-v1.0.0-mac-gpkg");
+  assert.equal(release.macPackageFilename, "commanders-v1.0.0-mac.gpkg");
+  assert.deepEqual(release.candidateArtifactNames, [
+    "commanders-v1.0.0-web-gpkg",
+    "commanders-v1.0.0-mac-gpkg"
+  ]);
+});
+
 test("Motion targets resolve one package from their shared exact-tag run", async () => {
   const release = await resolvePrivateRelease({
     registryFile,

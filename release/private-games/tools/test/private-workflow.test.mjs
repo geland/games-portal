@@ -25,8 +25,7 @@ test("private publication is manual-only and repository choices are fixed", () =
   assert.doesNotMatch(trigger, /\bpush:|pull_request:|schedule:/);
   const gameInput = trigger.slice(trigger.indexOf("      game:\n"), trigger.indexOf("      source_sha:\n"));
   const choices = [...gameInput.matchAll(/^          - (.+)$/gm)].map((match) => match[1]);
-  assert.deepEqual(choices, ["butts", "blend-in", "web-dodge", "motion-tracker", "balloon", "labyrinth"]);
-  assert.doesNotMatch(trigger, /^          - commanders$/m);
+  assert.deepEqual(choices, ["butts", "blend-in", "commanders", "web-dodge", "motion-tracker", "balloon", "labyrinth"]);
   assert.doesNotMatch(trigger, /repository:/);
 });
 
@@ -82,8 +81,9 @@ test("documentation makes exact tag provenance and approved single-operator cont
   assert.match(releaseDocs, /does not relax[\s\S]+exact-tag\/SHA checks/i);
 });
 
-test("catalog links eligible native Motion downloads and no held Commanders release", () => {
+test("catalog links every newly eligible release", () => {
   assert.match(catalog, /href="\/download\/balloon\/mac"/);
   assert.match(catalog, /href="\/download\/labyrinth\/mac"/);
-  assert.doesNotMatch(catalog, /href="\/(?:play|download)\/commanders(?:\/|\")/);
+  assert.match(catalog, /href="\/play\/commanders"/);
+  assert.match(catalog, /href="\/download\/commanders\/mac"/);
 });
