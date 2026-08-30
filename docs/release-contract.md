@@ -41,6 +41,7 @@ procedure. Resume never overwrites immutable content.
 - `butts`
 - `racing-maze`
 - `blend-in`
+- `commanders`
 - `web-dodge`
 - `motion-tracker`
 - `balloon`

@@ -13,6 +13,12 @@
       "bundleIdentifier": "com.gregeland.blendin",
       "profiles": ["mac"]
     },
+    "commanders": {
+      "repository": "geland/commanders",
+      "config": "release/private-games/configs/commanders.json",
+      "bundleIdentifier": "com.gregeland.commanders",
+      "profiles": ["web", "web+mac"]
+    },
     "web-dodge": {
       "repository": "geland/motion-games",
       "config": "release/private-games/configs/web-dodge.json",

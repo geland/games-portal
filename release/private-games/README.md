@@ -28,7 +28,13 @@ identities:
 - `Motion Labyrinth.app` — `com.gregeland.motionlabyrinth`
 
 Both are Mac-only releases; their shared hosted tracker remains the independent
-`motion-tracker` Web release. Commanders is not on this allowlist.
+`motion-tracker` Web release.
+
+Commanders uses the standard Web+Mac candidate contract from
+`geland/commanders`. Its source workflow first stages the exact tracked runtime
+allowlist, excluding local experiments and source-only assets, then verifies
+the payload and size budgets before creating the constrained candidates. Its
+approved bundle identity is `com.gregeland.commanders`.
 
 A manually dispatched candidate is useful for validation but is deliberately
 ineligible for publication. Publishable candidates must come from an exact
