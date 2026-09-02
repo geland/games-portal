@@ -1,3 +1,5 @@
+import { LEGACY_COMMIT_DATES, MANAGED_GAME_SLUGS } from "./release-metadata";
+
 type ReleaseTarget = {
   entry: string;
 };
@@ -11,6 +13,7 @@ type ReleaseManifest = {
   slug: string;
   version: string;
   sourceCommit: string;
+  sourceCommittedAt?: string;
   publishedAt: string;
   web?: ReleaseTarget;
   mac?: DownloadTarget;
@@ -49,6 +52,21 @@ async function routeRequest(request: Request, env: Env): Promise<Response> {
     response.headers.set("Allow", "GET, HEAD");
     return response;
   }
+
+  const metadataMatch = /^\/api\/releases\/([^/]+)\/?$/.exec(url.pathname);
+  if (metadataMatch) {
+    const slug = metadataMatch[1] ?? "";
+    if (!MANAGED_GAME_SLUGS.has(slug)) return textResponse("Unknown game", 404);
+    const manifest = await readManifest(env, slug);
+    if (!manifest || manifest.slug !== slug) return textResponse("Release not found", 404);
+    return new Response(request.method === "HEAD" ? null : JSON.stringify({
+      slug,
+      version: manifest.version,
+      sourceCommit: manifest.sourceCommit,
+      sourceCommittedAt: manifest.sourceCommittedAt ?? LEGACY_COMMIT_DATES[manifest.sourceCommit] ?? null
+    }), { headers: securityHeaders("application/json; charset=utf-8") });
+  }
+  if (url.pathname.startsWith("/api/releases")) return textResponse("Unknown game", 404);
 
   const playMatch = /^\/play\/([^/]+)\/?$/.exec(url.pathname);
   if (playMatch) {
@@ -121,11 +139,19 @@ function releaseRedirect(location: string): Response {
 
 async function readManifest(env: Env, slug: string): Promise<ReleaseManifest | null> {
   const object = await env.GAME_RELEASES.get(`manifests/${slug}/stable.json`);
-  if (!object || object.size > 32_768) {
+  if (!object) return null;
+  if (object.size > 32_768) {
+    await object.body.cancel();
     return null;
   }
 
-  const value: unknown = await object.json();
+  let value: unknown;
+  try {
+    value = await object.json();
+  } catch {
+    console.error(JSON.stringify({ message: "unreadable release manifest", slug }));
+    return null;
+  }
   if (!isReleaseManifest(value)) {
     console.error(JSON.stringify({ message: "invalid release manifest", slug }));
     return null;
@@ -136,7 +162,7 @@ async function readManifest(env: Env, slug: string): Promise<ReleaseManifest | n
 function isReleaseManifest(value: unknown): value is ReleaseManifest {
   if (!value || typeof value !== "object") return false;
   const candidate = value as Record<string, unknown>;
-  const allowedKeys = new Set(["slug", "version", "sourceCommit", "publishedAt", "web", "mac", "files"]);
+  const allowedKeys = new Set(["slug", "version", "sourceCommit", "sourceCommittedAt", "publishedAt", "web", "mac", "files"]);
   if (Object.keys(candidate).some((key) => !allowedKeys.has(key))) return false;
   if (!(typeof candidate.slug === "string"
     && SLUG_RE.test(candidate.slug)
@@ -149,6 +175,7 @@ function isReleaseManifest(value: unknown): value is ReleaseManifest {
     && new Date(candidate.publishedAt).toISOString() === candidate.publishedAt)) {
     return false;
   }
+  if (candidate.sourceCommittedAt !== undefined && !isIsoTimestamp(candidate.sourceCommittedAt)) return false;
 
   const validEntry = (target: unknown): boolean => {
     if (target === undefined) return true;
@@ -199,6 +226,11 @@ function securityHeaders(contentType: string): Headers {
     "Referrer-Policy": "strict-origin-when-cross-origin",
     "Permissions-Policy": "camera=(self), microphone=()"
   });
+}
+
+function isIsoTimestamp(value: unknown): value is string {
+  return typeof value === "string" && Number.isFinite(Date.parse(value))
+    && new Date(value).toISOString() === value;
 }
 
 function textResponse(message: string, status: number): Response {

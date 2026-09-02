@@ -1,3 +1,5 @@
+import { refreshReleaseCards } from "/release-metadata.js?v=1";
+
 const filters = [...document.querySelectorAll(".filter")];
 const filterable = [...document.querySelectorAll("[data-platforms]")];
 const gameCount = document.querySelector("#game-count");
@@ -62,3 +64,8 @@ const year = document.querySelector("#year");
 if (year) {
   year.textContent = String(new Date().getFullYear());
 }
+
+void refreshReleaseCards(document.querySelectorAll("[data-release-slug]"));
+window.addEventListener("pageshow", (event) => {
+  if (event.persisted) void refreshReleaseCards(document.querySelectorAll("[data-release-slug]"));
+});

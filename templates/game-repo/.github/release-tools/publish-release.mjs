@@ -38,6 +38,8 @@ export async function main() {
   const config = await loadConfig();
   version = required("RELEASE_VERSION");
   sourceCommit = required("SOURCE_COMMIT").toLowerCase();
+  const sourceCommittedAt = required("SOURCE_COMMITTED_AT");
+  assertPublishedAt(sourceCommittedAt, "SOURCE_COMMITTED_AT");
   const accountId = required("CLOUDFLARE_ACCOUNT_ID");
   bucket = required("R2_BUCKET");
   const publicBase = new URL(required("R2_PUBLIC_BASE"));
@@ -104,6 +106,7 @@ export async function main() {
     version,
     sourceCommit,
     publishedAt: new Date().toISOString(),
+    sourceCommittedAt,
     webEntry,
     macKey,
     files
@@ -203,7 +206,7 @@ export function compareReleaseVersions(left, right) {
 }
 
 export function validateImmutableManifest(raw, expected = {}) {
-  assertExactKeys(raw, ["slug", "version", "sourceCommit", "publishedAt", "files"], ["web", "mac"], "release manifest");
+  assertExactKeys(raw, ["slug", "version", "sourceCommit", "publishedAt", "files"], ["web", "mac", "sourceCommittedAt"], "release manifest");
   if (typeof raw.slug !== "string" || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(raw.slug)) {
     throw new Error("release manifest slug is invalid");
   }
@@ -219,6 +222,9 @@ export function validateImmutableManifest(raw, expected = {}) {
     throw new Error("release manifest sourceCommit does not match the requested source commit");
   }
   assertPublishedAt(raw.publishedAt, "release manifest publishedAt");
+  if (Object.hasOwn(raw, "sourceCommittedAt")) {
+    assertPublishedAt(raw.sourceCommittedAt, "release manifest sourceCommittedAt");
+  }
 
   const expectsWeb = Object.hasOwn(expected, "webEntry");
   const expectsMac = Object.hasOwn(expected, "macKey");

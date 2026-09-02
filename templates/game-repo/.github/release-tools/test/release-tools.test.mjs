@@ -44,6 +44,20 @@ function versionEntry(manifest) {
   };
 }
 
+test("new manifests carry commit time and old immutable manifests remain valid unchanged", () => {
+  const old = releaseManifest();
+  const original = JSON.stringify(old);
+  assert.equal(validateImmutableManifest(old), old);
+  assert.equal(JSON.stringify(old), original);
+  const sourceCommittedAt = "2026-08-24T23:00:00.000Z";
+  const next = buildManifest({ ...old, sourceCommittedAt, webEntry: old.web.entry, macKey: old.mac.key });
+  assert.equal(next.sourceCommittedAt, sourceCommittedAt);
+  assert.equal(validateImmutableManifest(next), next);
+  for (const invalid of [null, "invalid", "2026-02-30T00:00:00.000Z"]) {
+    assert.throws(() => validateImmutableManifest({ ...old, sourceCommittedAt: invalid }), /sourceCommittedAt/);
+  }
+});
+
 test("release versions are exact semantic tags", () => {
   assert.equal(VERSION_RE.test("v1.2.3"), true);
   for (const value of ["1.2.3", "v01.2.3", "v1.2", "v1.2.3-beta", "v1.2.3/evil"]) assert.equal(VERSION_RE.test(value), false);

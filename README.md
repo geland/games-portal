@@ -20,6 +20,32 @@ npm run dev
 Local Wrangler uses an isolated R2 simulation. Production credentials belong in
 Cloudflare/GitHub secret stores, never in this repository.
 
+## Automatic library metadata
+
+Managed game cards load version and update date from `/api/releases/:slug` on
+page load and back/forward restoration. The read-only, same-origin endpoint
+reads the same `stable.json` as Play/Download, with `no-store` caching. Promoting
+a game release updates its card on the next page load without a portal deploy.
+There is no GitHub token or private-repository request in the browser or Worker.
+
+“Updated” means the published source commit's **committer date**, displayed in
+America/Los_Angeles, not the newest development commit or upload time. Protected
+public/private publishers fetch the exact approved SHA's date from GitHub and
+require `SOURCE_COMMITTED_AT` before publication. New manifests include it as
+`sourceCommittedAt`; the verified legacy SHA/date map in `src/release-metadata.ts`
+supports older immutable manifests without rewriting them. An unknown legacy
+commit displays its version without an invented update date.
+
+Static card text remains the no-JavaScript/offline/error fallback. New cards
+still need normal catalog edits and a portal deploy, including their managed
+slug in the API allowlist. Dognado, Snake Arena, and Woberia remain external
+GitHub Pages games with manually maintained build/date metadata.
+
+Deploy the timestamp-aware portal before using the updated game publishers;
+older portal validators reject the new manifest field. Do not roll the portal
+back to a pre-timestamp validator after such a game release. Existing immutable
+manifests remain valid and resume operations retain their original contents.
+
 ## Release layout
 
 ```text

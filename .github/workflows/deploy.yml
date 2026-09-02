@@ -25,6 +25,13 @@ jobs:
       - run: npm ci --ignore-scripts --no-audit
       - run: npm run types:check
       - run: npm test
+      - name: Validate trusted release metadata tooling
+        run: |
+          npm ci --prefix templates/game-repo/.github/release-tools --ignore-scripts --no-audit
+          npm test --prefix templates/game-repo/.github/release-tools
+          npm test --prefix release/private-games/tools
+          npm ci --prefix release/public-games/tools --ignore-scripts --no-audit
+          npm test --prefix release/public-games/tools
       - run: npm run build
 
   deploy:
