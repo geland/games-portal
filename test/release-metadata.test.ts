@@ -14,6 +14,17 @@ function manifest(version = "v1.5.0") {
 const url = "https://games.gregeland.com/api/releases/butts";
 
 describe("live catalog release metadata", () => {
+  it("includes the latest Commanders release made by the pre-timestamp publisher", async () => {
+    const release = { ...manifest("v1.3.0"), slug: "commanders",
+      sourceCommit: "0dcc1135713001c8a3bba41b460c4ed6e0a2b624",
+      files: [{ ...manifest().files[0], key: "releases/commanders/v1.3.0/web/index.html" }] };
+    await env.GAME_RELEASES.put("manifests/commanders/stable.json", JSON.stringify(release));
+    expect(await (await SELF.fetch("https://games.gregeland.com/api/releases/commanders")).json()).toEqual({
+      slug: "commanders", version: "v1.3.0", sourceCommit: release.sourceCommit,
+      sourceCommittedAt: "2026-09-02T15:41:44.000Z"
+    });
+  });
+
   it("returns only public display identity with the verified legacy commit date", async () => {
     await env.GAME_RELEASES.put("manifests/butts/stable.json", JSON.stringify(manifest()));
     const response = await SELF.fetch(url);

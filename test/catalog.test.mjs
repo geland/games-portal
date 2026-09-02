@@ -89,5 +89,5 @@ test("all managed cards are wired and external Pages cards remain static", async
   assert.deepEqual(slugs.sort(), expected.sort());
   assert.match(html, /app.js\?v=geland-4" type="module"/);
   assert.match(html, /v1\.5\.0<\/span><span><time datetime="2026-08-30"/);
-  assert.match(html, /v1\.2\.1<\/span><span><time datetime="2026-09-01"/);
+  assert.match(html, /v1\.3\.0<\/span><span><time datetime="2026-09-02"/);
 });
