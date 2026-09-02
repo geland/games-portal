@@ -68,6 +68,16 @@ test("Mac signing requires the plist-named main executable to be executable", as
   assert.match(script, /! -f .*Contents\/MacOS\/\$\{EXECUTABLE\}.*\|\| ! -x .*Contents\/MacOS\/\$\{EXECUTABLE\}/);
 });
 
+test("Mac signing verifies the final archive after an extraction round trip", async () => {
+  const script = await readFile(path.resolve(releaseToolRoot, "../scripts/sign-notarize-macos.sh"), "utf8");
+  const archive = script.indexOf('ditto -c -k --sequesterRsrc --keepParent');
+  const extract = script.indexOf('ditto -x -k "${MAC_ARCHIVE}"');
+  const verify = script.indexOf('codesign --verify --deep --strict --verbose=4 "${ARCHIVED_APP}"');
+  assert.ok(archive >= 0 && archive < extract && extract < verify);
+  assert.match(script, /stapler validate -v "\$\{ARCHIVED_APP\}"/);
+  assert.match(script, /spctl --assess --type execute --verbose=4 "\$\{ARCHIVED_APP\}"/);
+});
+
 test("configuration is strict", () => {
   assert.equal(validateConfig(config).slug, "astro-bro");
   assert.throws(() => validateConfig({ ...config, slug: "Astro Bro" }));
