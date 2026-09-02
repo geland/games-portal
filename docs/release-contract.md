@@ -39,6 +39,7 @@ procedure. Resume never overwrites immutable content.
 
 - `astro-bro`
 - `butts`
+- `tower-defense`
 - `racing-maze`
 - `blend-in`
 - `commanders`
@@ -73,6 +74,7 @@ root.
   "slug": "astro-bro",
   "version": "v1.0.0",
   "sourceCommit": "0123456789abcdef0123456789abcdef01234567",
+  "sourceCommittedAt": "2026-08-24T21:00:00.000Z",
   "publishedAt": "2026-08-25T12:00:00.000Z",
   "web": { "entry": "index.html" },
   "mac": {
@@ -89,6 +91,14 @@ root.
   ]
 }
 ```
+
+`sourceCommittedAt` is the exact source commit's committer timestamp, obtained
+from GitHub by trusted portal tooling, normalized to ISO-8601 UTC. It is required
+for newly created manifests; readers accept its absence in older immutable
+manifests, and resume preserves those original manifests without backfilling.
+`publishedAt` remains the time the version manifest was first created. The
+catalog uses the commit timestamp, not publication time, for “Updated”. The
+version index schema is unchanged.
 
 The hosted tracker is published as the independent Web slug
 `motion-tracker`; `/tracker` resolves that slug's ordinary Web target. This

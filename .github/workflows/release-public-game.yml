@@ -389,10 +389,19 @@ jobs:
           APPLE_NOTARY_ISSUER_ID: ${{ secrets.APPLE_NOTARY_ISSUER_ID }}
         run: bash "${RELEASE_SCRIPT_ROOT}/sign-notarize-macos.sh"
 
+      - name: Read the exact published source commit date
+        id: source_metadata
+        env:
+          SOURCE_REPOSITORY: ${{ needs.authorize.outputs.source_repository }}
+          SOURCE_COMMIT: ${{ needs.authorize.outputs.source_sha }}
+          SOURCE_READ_TOKEN: ${{ github.token }}
+        run: node "${RELEASE_TOOL_ROOT}/source-commit.mjs"
+
       - name: Publish immutable objects and promote stable last
         env:
           RELEASE_VERSION: ${{ needs.authorize.outputs.version }}
           SOURCE_COMMIT: ${{ needs.authorize.outputs.source_sha }}
+          SOURCE_COMMITTED_AT: ${{ steps.source_metadata.outputs.source_committed_at }}
           ALLOW_RESUME: ${{ needs.authorize.outputs.resume }}
           GAME_SLUG: ${{ needs.authorize.outputs.slug }}
           R2_BUCKET: ${{ vars.R2_BUCKET }}

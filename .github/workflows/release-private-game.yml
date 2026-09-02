@@ -274,11 +274,20 @@ jobs:
           test -z "$(git -C trusted status --porcelain=v1 --untracked-files=all)"
           test ! -e private-source
 
+      - name: Read the exact published source commit date
+        id: source_metadata
+        env:
+          SOURCE_REPOSITORY: ${{ needs.authorize.outputs.source_repository }}
+          SOURCE_COMMIT: ${{ needs.authorize.outputs.source_sha }}
+          SOURCE_READ_TOKEN: ${{ secrets.PRIVATE_ACTIONS_READ_TOKEN }}
+        run: node "${RELEASE_TOOL_ROOT}/source-commit.mjs"
+
       - name: Publish immutable objects and promote stable last
         env:
           RELEASE_CONFIG_FILE: ${{ env.EFFECTIVE_RELEASE_CONFIG }}
           RELEASE_VERSION: ${{ needs.authorize.outputs.version }}
           SOURCE_COMMIT: ${{ needs.authorize.outputs.source_sha }}
+          SOURCE_COMMITTED_AT: ${{ steps.source_metadata.outputs.source_committed_at }}
           ALLOW_RESUME: ${{ needs.authorize.outputs.resume }}
           GAME_SLUG: ${{ needs.authorize.outputs.slug }}
           R2_BUCKET: ${{ vars.R2_BUCKET }}

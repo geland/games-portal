@@ -285,8 +285,9 @@ export function createScopedR2Credentials({ accountId, accessKeyId, secretAccess
   };
 }
 
-export function buildManifest({ slug, version, sourceCommit, publishedAt, webEntry, macKey, files }) {
+export function buildManifest({ slug, version, sourceCommit, sourceCommittedAt, publishedAt, webEntry, macKey, files }) {
   const manifest = { slug, version, sourceCommit, publishedAt };
+  if (sourceCommittedAt !== undefined) manifest.sourceCommittedAt = sourceCommittedAt;
   if (webEntry) manifest.web = { entry: webEntry };
   if (macKey) manifest.mac = { key: macKey, filename: path.posix.basename(macKey) };
   manifest.files = files.map(({ key, size, sha256, contentType }) => ({ key, size, sha256, contentType }));
