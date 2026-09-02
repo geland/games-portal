@@ -68,6 +68,7 @@ readonly P12_FILE="${RUNNER_TEMP}/gregeland-developer-id-${GITHUB_RUN_ID}-${GITH
 readonly P8_FILE="${RUNNER_TEMP}/AuthKey_${APPLE_NOTARY_KEY_ID}.p8"
 readonly NOTARY_ZIP="${RUNNER_TEMP}/gregeland-notary-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.zip"
 readonly NOTARY_RESULT="${RUNNER_TEMP}/gregeland-notary-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.json"
+readonly ARCHIVE_VERIFY_DIR="${RUNNER_TEMP}/gregeland-archive-verify-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
 readonly KEYCHAIN_PASSWORD="$(openssl rand -hex 32)"
 readonly DEFAULT_KEYCHAIN="$(security default-keychain -d user | tr -d '"')"
 
@@ -76,6 +77,7 @@ cleanup() {
   security list-keychains -d user -s "${DEFAULT_KEYCHAIN}"
   security delete-keychain "${KEYCHAIN}"
   rm -f "${P12_FILE}" "${P8_FILE}" "${NOTARY_ZIP}" "${NOTARY_RESULT}"
+  rm -rf "${ARCHIVE_VERIFY_DIR}"
 }
 trap cleanup EXIT
 
@@ -162,4 +164,13 @@ spctl --assess --type execute --verbose=4 "${MAC_APP}"
 mkdir -p "$(dirname "${MAC_ARCHIVE}")"
 ditto -c -k --sequesterRsrc --keepParent "${MAC_APP}" "${MAC_ARCHIVE}"
 unzip -tq "${MAC_ARCHIVE}" >/dev/null
+
+# Validate the actual bytes users will extract, not only the pre-archive app.
+# This catches archive metadata or round-trip damage before immutable upload.
+mkdir -p "${ARCHIVE_VERIFY_DIR}"
+ditto -x -k "${MAC_ARCHIVE}" "${ARCHIVE_VERIFY_DIR}"
+readonly ARCHIVED_APP="${ARCHIVE_VERIFY_DIR}/$(basename "${MAC_APP}")"
+codesign --verify --deep --strict --verbose=4 "${ARCHIVED_APP}"
+xcrun stapler validate -v "${ARCHIVED_APP}"
+spctl --assess --type execute --verbose=4 "${ARCHIVED_APP}"
 shasum -a 256 "${MAC_ARCHIVE}"
