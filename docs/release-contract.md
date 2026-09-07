@@ -39,6 +39,7 @@ procedure. Resume never overwrites immutable content.
 
 - `astro-bro`
 - `butts`
+- `lines-drawn`
 - `tower-defense`
 - `racing-maze`
 - `blend-in`

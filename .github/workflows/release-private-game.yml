@@ -10,6 +10,7 @@ on:
         type: choice
         options:
           - butts
+          - lines-drawn
           - blend-in
           - commanders
           - web-dodge

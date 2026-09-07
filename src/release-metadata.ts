@@ -1,5 +1,5 @@
 export const MANAGED_GAME_SLUGS = new Set([
-  "astro-bro", "butts", "commanders", "tower-defense", "racing-maze",
+  "astro-bro", "butts", "lines-drawn", "commanders", "tower-defense", "racing-maze",
   "blend-in", "web-dodge", "motion-tracker", "balloon", "labyrinth"
 ]);
 

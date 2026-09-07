@@ -29,6 +29,27 @@ test("private releases resolve only fixed repositories and profiles", async () =
   assert.deepEqual(release.candidateArtifactNames, ["butts-v1.2.3-web-gpkg", "butts-v1.2.3-mac-gpkg"]);
 });
 
+test("Lines Drawn resolves exact Web and Mac candidate identities", async () => {
+  const release = await resolvePrivateRelease({
+    registryFile,
+    gameId: "lines-drawn",
+    sourceSha: sha,
+    version: "v1.0.0",
+    profile: "web+mac",
+    buildRunId: "32920663101",
+    resume: "false"
+  });
+  assert.equal(release.repository, "geland/lines-drawn");
+  assert.equal(release.sourceWorkflow, ".github/workflows/release.yml");
+  assert.equal(release.bundleIdentifier, "com.gregeland.linesdrawn");
+  assert.equal(release.webArtifactName, "lines-drawn-v1.0.0-web-gpkg");
+  assert.equal(release.macArtifactName, "lines-drawn-v1.0.0-mac-gpkg");
+  assert.deepEqual(release.candidateArtifactNames, [
+    "lines-drawn-v1.0.0-web-gpkg",
+    "lines-drawn-v1.0.0-mac-gpkg"
+  ]);
+});
+
 test("Commanders resolves exact Web and Mac candidate identities", async () => {
   const release = await resolvePrivateRelease({
     registryFile,

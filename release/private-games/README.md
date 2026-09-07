@@ -36,6 +36,10 @@ allowlist, excluding local experiments and source-only assets, then verifies
 the payload and size budgets before creating the constrained candidates. Its
 approved bundle identity is `com.gregeland.commanders`.
 
+Lines Drawn uses the standard Web+Mac candidate contract from
+`geland/lines-drawn`. Its approved bundle identity is
+`com.gregeland.linesdrawn`.
+
 A manually dispatched candidate is useful for validation but is deliberately
 ineligible for publication. Publishable candidates must come from an exact
 `vMAJOR.MINOR.PATCH` tag so GitHub independently records the source SHA used by
