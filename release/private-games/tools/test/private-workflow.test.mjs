@@ -84,6 +84,12 @@ test("documentation makes exact tag provenance and approved single-operator cont
   assert.match(releaseDocs, /owner explicitly approved single-operator[\s\S]+releases/i);
   assert.match(releaseDocs, /without an independent[\s\S]+GitHub environment reviewer/i);
   assert.match(releaseDocs, /does not relax[\s\S]+exact-tag\/SHA checks/i);
+  assert.match(releaseDocs, /## Operator runbook/);
+  assert.match(releaseDocs, /explicit user approval/);
+  assert.match(releaseDocs, /gh workflow run release-private-game\.yml/);
+  assert.match(releaseDocs, /Actions artifact count is zero/);
+  assert.match(releaseDocs, /stable\.json` last/);
+  assert.match(releaseDocs, /Never move, delete,[\s\S]+reuse an existing version tag/);
 });
 
 test("catalog links every newly eligible release", () => {

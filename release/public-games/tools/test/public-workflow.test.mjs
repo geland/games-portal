@@ -54,6 +54,15 @@ test("documentation requires protected main and records the approved single-oper
   }
 });
 
+test("documentation provides an explicit public-source operator runbook", () => {
+  assert.match(releaseDocs, /## Operator runbook/);
+  assert.match(releaseDocs, /explicit user approval/);
+  assert.match(releaseDocs, /gh workflow run release-public-game\.yml/);
+  assert.match(releaseDocs, /source_sha=<40-character-source-sha>/);
+  assert.match(releaseDocs, /stable\.json` must be last/);
+  assert.match(releaseDocs, /Preserve its[\s\S]+visibility/);
+});
+
 test("public source build job has no environment or production secret references", () => {
   const build = job("build-public-game", "sign-and-publish");
   assert.match(build, /repository: \$\{\{ needs\.authorize\.outputs\.source_repository \}\}/);
