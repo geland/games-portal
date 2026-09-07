@@ -2,7 +2,7 @@ const REPOSITORY_RE = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 const SHA_RE = /^[0-9a-f]{40}$/;
 const VERSION_RE = /^v(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)$/;
 const DIGEST_RE = /^sha256:[0-9a-f]{64}$/;
-const MAX_ARTIFACT_BYTES = 5 * 1024 * 1024 * 1024;
+const MAX_RELEASE_ASSET_BYTES = 2 * 1024 * 1024 * 1024 - 1;
 const APPROVED_WORKFLOWS = new Map([
   [".github/workflows/release.yml", () => "Build game release candidate"],
   [".github/workflows/static-release-candidates.yml", (version) => `Static candidates from ${version} (push)`],
@@ -62,18 +62,30 @@ function validateGitObject(value, label) {
   return { type: gitObject.type, sha: gitObject.sha };
 }
 
-export function selectCandidateArtifacts(responseValue, expectedValue) {
-  const response = object(responseValue, "candidate artifact response");
-  const expected = object(expectedValue, "expected candidate artifacts");
+export function validateCandidateRelease(releaseValue, expectedValue) {
+  const release = object(releaseValue, "candidate release");
+  const expected = object(expectedValue, "expected candidate release");
+  if (!SHA_RE.test(expected.sourceSha ?? "")) throw new Error("expected source SHA is invalid");
+  if (!VERSION_RE.test(expected.version ?? "")) throw new Error("expected version is invalid");
+  positiveInteger(release.id, "candidate release ID");
+  if (release.tag_name !== expected.version) throw new Error("candidate release tag does not match");
+  if (release.target_commitish !== expected.sourceSha) throw new Error("candidate release source SHA does not match");
+  if (release.draft !== false || release.prerelease !== true) throw new Error("candidate release must be a published prerelease");
+  if (!Array.isArray(release.assets)) throw new Error("candidate release assets must be an array");
+  return release;
+}
+
+export function selectCandidateReleaseAssets(assetsValue, expectedValue) {
+  const expected = object(expectedValue, "expected candidate release assets");
   positiveInteger(expected.runId, "expected run ID");
   if (!SHA_RE.test(expected.sourceSha ?? "")) throw new Error("expected source SHA is invalid");
   const expectedNames = [];
-  if (expected.candidateWebEnabled) expectedNames.push(expected.webArtifactName);
-  if (expected.candidateMacEnabled) expectedNames.push(expected.macArtifactName);
-  const allExpectedNames = expected.candidateArtifactNames;
-  const validName = (name) => typeof name === "string" && /^[a-z0-9][a-z0-9.+-]{0,199}$/.test(name);
+  if (expected.candidateWebEnabled) expectedNames.push(expected.webAssetName);
+  if (expected.candidateMacEnabled) expectedNames.push(expected.macAssetName);
+  const allExpectedNames = expected.candidateAssetNames;
+  const validName = (name) => typeof name === "string" && /^[a-z0-9][a-z0-9.+-]{0,199}\.gpkg$/.test(name);
   if (expectedNames.length === 0 || expectedNames.some((name) => !validName(name))) {
-    throw new Error("expected candidate artifact names are invalid");
+    throw new Error("expected candidate release asset names are invalid");
   }
   if (!Array.isArray(allExpectedNames)
       || allExpectedNames.length === 0
@@ -81,31 +93,26 @@ export function selectCandidateArtifacts(responseValue, expectedValue) {
       || allExpectedNames.some((name) => !validName(name))
       || new Set(allExpectedNames).size !== allExpectedNames.length
       || expectedNames.some((name) => !allExpectedNames.includes(name))) {
-    throw new Error("complete candidate artifact names are invalid");
+    throw new Error("complete candidate release asset names are invalid");
   }
-  if (!Array.isArray(response.artifacts)) throw new Error("candidate artifacts must be an array");
-  if (response.total_count !== response.artifacts.length) throw new Error("candidate artifact response is incomplete");
-  if (response.artifacts.length !== allExpectedNames.length) throw new Error("candidate run has an unexpected artifact count");
+  if (!Array.isArray(assetsValue)) throw new Error("candidate release assets must be an array");
+  if (assetsValue.length !== allExpectedNames.length) throw new Error("candidate release has an unexpected asset count");
 
   const selected = new Map();
-  for (const artifactValue of response.artifacts) {
-    const artifact = object(artifactValue, "candidate artifact");
-    if (!allExpectedNames.includes(artifact.name) || selected.has(artifact.name)) throw new Error("candidate run has an unexpected or duplicate artifact");
-    positiveInteger(artifact.id, "candidate artifact ID");
-    if (!Number.isSafeInteger(artifact.size_in_bytes) || artifact.size_in_bytes <= 0 || artifact.size_in_bytes > MAX_ARTIFACT_BYTES) {
-      throw new Error("candidate artifact size is invalid");
+  for (const assetValue of assetsValue) {
+    const asset = object(assetValue, "candidate release asset");
+    if (!allExpectedNames.includes(asset.name) || selected.has(asset.name)) throw new Error("candidate release has an unexpected or duplicate asset");
+    positiveInteger(asset.id, "candidate release asset ID");
+    if (!Number.isSafeInteger(asset.size) || asset.size <= 0 || asset.size > MAX_RELEASE_ASSET_BYTES) {
+      throw new Error("candidate release asset size is invalid");
     }
-    if (artifact.expired !== false) throw new Error("candidate artifact is expired");
-    if (!DIGEST_RE.test(artifact.digest ?? "")) throw new Error("candidate artifact digest is invalid");
-    const workflowRun = object(artifact.workflow_run, "candidate artifact workflow run");
-    if (workflowRun.id !== expected.runId || workflowRun.head_sha !== expected.sourceSha) {
-      throw new Error("candidate artifact workflow identity does not match");
-    }
-    selected.set(artifact.name, { id: artifact.id, digest: artifact.digest });
+    if (asset.state !== "uploaded") throw new Error("candidate release asset is not uploaded");
+    if (!DIGEST_RE.test(asset.digest ?? "")) throw new Error("candidate release asset digest is invalid");
+    selected.set(asset.name, { id: asset.id, digest: asset.digest });
   }
 
   return {
-    web: expected.candidateWebEnabled ? selected.get(expected.webArtifactName) : null,
-    mac: expected.candidateMacEnabled ? selected.get(expected.macArtifactName) : null
+    web: expected.candidateWebEnabled ? selected.get(expected.webAssetName) : null,
+    mac: expected.candidateMacEnabled ? selected.get(expected.macAssetName) : null
   };
 }

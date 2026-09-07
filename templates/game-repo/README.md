@@ -48,9 +48,11 @@ npm test --prefix .github/release-tools
 
 ## GitHub configuration
 
-No repository variable or secret is required. Leave Actions' default workflow
-token read-only. An exact tag or `workflow_dispatch` is a deliberate build
-gate, but the resulting one-day artifact is unsigned and unpublished.
+No repository variable or secret is required. The release job grants its
+ephemeral workflow token only `contents: write` so an exact tag build can create
+the private candidate prerelease; no Apple or Cloudflare secret is present. An
+exact tag or `workflow_dispatch` is a deliberate build gate, but the resulting
+candidate package is unsigned and is not the playable publication.
 
 ## Candidate build
 
@@ -66,14 +68,15 @@ regular expressions; the authorization job rejects anything that is not
 exactly `vMAJOR.MINOR.PATCH` (with no leading zeroes or suffix). A manual run
 requires both that exact version and the full 40-character commit SHA.
 
-The workflow uploads constrained `.gpkg` data packages with one-day retention.
-They contain Web output and/or an unsigned Mac app, but remain build evidence,
-not a public release. Never present an unsigned Mac candidate as a downloadable
-game. A manually dispatched run is deliberately ineligible for publication;
-the central handoff accepts only a successful exact semantic-version tag run.
-The protected portal workflow validates the exact source, run, artifact ID,
-server digest, and inner package identity, then performs signing/publication on
-a fresh runner before a stable manifest can exist.
+The workflow uploads constrained `.gpkg` data packages as private GitHub
+prerelease assets rather than Actions artifacts. They contain Web output and/or
+an unsigned Mac app, but remain build evidence, not a public game release. Never
+present an unsigned Mac candidate as a downloadable game. A manually dispatched
+run is deliberately ineligible for publication and uploads nothing; the central
+handoff accepts only a successful exact semantic-version tag run. The protected
+portal workflow validates the exact source, run, release-asset ID, server digest,
+and inner package identity, then performs signing/publication on a fresh runner
+before a stable manifest can exist.
 
 ## What the workflow verifies
 

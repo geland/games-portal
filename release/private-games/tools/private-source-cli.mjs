@@ -36,11 +36,11 @@ if (command === "resolve") {
     bundle_identifier: release.bundleIdentifier,
     candidate_web_enabled: String(release.candidateWebEnabled),
     candidate_mac_enabled: String(release.candidateMacEnabled),
-    web_artifact_name: release.webArtifactName,
+    web_asset_name: release.webAssetName,
     web_package_filename: release.webPackageFilename,
-    mac_artifact_name: release.macArtifactName,
+    mac_asset_name: release.macAssetName,
     mac_package_filename: release.macPackageFilename,
-    candidate_artifact_names_json: JSON.stringify(release.candidateArtifactNames)
+    candidate_asset_names_json: JSON.stringify(release.candidateAssetNames)
   };
   await appendFile(required("GITHUB_OUTPUT"), Object.entries(values).map(([key, value]) => `${key}=${value}\n`).join(""));
 } else if (command === "write-effective-config") {

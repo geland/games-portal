@@ -75,11 +75,11 @@ jobs:
       bundle_identifier: ${{ steps.release.outputs.bundle_identifier }}
       candidate_web_enabled: ${{ steps.release.outputs.candidate_web_enabled }}
       candidate_mac_enabled: ${{ steps.release.outputs.candidate_mac_enabled }}
-      web_artifact_name: ${{ steps.release.outputs.web_artifact_name }}
+      web_asset_name: ${{ steps.release.outputs.web_asset_name }}
       web_package_filename: ${{ steps.release.outputs.web_package_filename }}
-      mac_artifact_name: ${{ steps.release.outputs.mac_artifact_name }}
+      mac_asset_name: ${{ steps.release.outputs.mac_asset_name }}
       mac_package_filename: ${{ steps.release.outputs.mac_package_filename }}
-      candidate_artifact_names_json: ${{ steps.release.outputs.candidate_artifact_names_json }}
+      candidate_asset_names_json: ${{ steps.release.outputs.candidate_asset_names_json }}
     steps:
       - name: Check out the trusted portal commit
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
@@ -186,7 +186,7 @@ jobs:
           EFFECTIVE_CONFIG_OUTPUT: ${{ env.EFFECTIVE_RELEASE_CONFIG }}
         run: node "${PRIVATE_TOOL_ROOT}/private-source-cli.mjs" write-effective-config
 
-      - name: Verify the private candidate run and complete artifact set
+      - name: Verify the private candidate run and release assets
         id: candidate
         env:
           SOURCE_REPOSITORY: ${{ needs.authorize.outputs.source_repository }}
@@ -197,23 +197,21 @@ jobs:
           BUILD_RUN_ID: ${{ needs.authorize.outputs.build_run_id }}
           CANDIDATE_WEB_ENABLED: ${{ needs.authorize.outputs.candidate_web_enabled }}
           CANDIDATE_MAC_ENABLED: ${{ needs.authorize.outputs.candidate_mac_enabled }}
-          WEB_ARTIFACT_NAME: ${{ needs.authorize.outputs.web_artifact_name }}
-          MAC_ARTIFACT_NAME: ${{ needs.authorize.outputs.mac_artifact_name }}
-          CANDIDATE_ARTIFACT_NAMES_JSON: ${{ needs.authorize.outputs.candidate_artifact_names_json }}
+          WEB_ASSET_NAME: ${{ needs.authorize.outputs.web_asset_name }}
+          MAC_ASSET_NAME: ${{ needs.authorize.outputs.mac_asset_name }}
+          CANDIDATE_ASSET_NAMES_JSON: ${{ needs.authorize.outputs.candidate_asset_names_json }}
           PRIVATE_ACTIONS_READ_TOKEN: ${{ secrets.PRIVATE_ACTIONS_READ_TOKEN }}
         run: node "${PRIVATE_TOOL_ROOT}/private-run-cli.mjs" verify
 
-      - name: Download the exact Web data package
+      - name: Download and verify the exact Web release asset
         if: needs.authorize.outputs.web_enabled == 'true'
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          artifact-ids: ${{ steps.candidate.outputs.web_artifact_id }}
-          path: ${{ runner.temp }}/gregeland-private-download/web
-          github-token: ${{ secrets.PRIVATE_ACTIONS_READ_TOKEN }}
-          repository: ${{ needs.authorize.outputs.source_repository }}
-          run-id: ${{ needs.authorize.outputs.build_run_id }}
-          merge-multiple: true
-          digest-mismatch: error
+        env:
+          SOURCE_REPOSITORY: ${{ needs.authorize.outputs.source_repository }}
+          RELEASE_ASSET_ID: ${{ steps.candidate.outputs.web_asset_id }}
+          RELEASE_ASSET_DIGEST: ${{ steps.candidate.outputs.web_asset_digest }}
+          RELEASE_ASSET_OUTPUT: ${{ runner.temp }}/gregeland-private-download/web/${{ needs.authorize.outputs.web_package_filename }}
+          PRIVATE_ACTIONS_READ_TOKEN: ${{ secrets.PRIVATE_ACTIONS_READ_TOKEN }}
+        run: node "${PRIVATE_TOOL_ROOT}/download-release-asset.mjs"
 
       - name: Verify and unpack Web data without executing it
         if: needs.authorize.outputs.web_enabled == 'true'
@@ -227,17 +225,15 @@ jobs:
           WEB_ENTRY: ${{ needs.authorize.outputs.web_entry }}
         run: node "${PACKAGE_TOOL_ROOT}/artifact-container-cli.mjs" unpack
 
-      - name: Download the exact unsigned Mac data package
+      - name: Download and verify the exact unsigned Mac release asset
         if: needs.authorize.outputs.mac_enabled == 'true'
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          artifact-ids: ${{ steps.candidate.outputs.mac_artifact_id }}
-          path: ${{ runner.temp }}/gregeland-private-download/mac
-          github-token: ${{ secrets.PRIVATE_ACTIONS_READ_TOKEN }}
-          repository: ${{ needs.authorize.outputs.source_repository }}
-          run-id: ${{ needs.authorize.outputs.build_run_id }}
-          merge-multiple: true
-          digest-mismatch: error
+        env:
+          SOURCE_REPOSITORY: ${{ needs.authorize.outputs.source_repository }}
+          RELEASE_ASSET_ID: ${{ steps.candidate.outputs.mac_asset_id }}
+          RELEASE_ASSET_DIGEST: ${{ steps.candidate.outputs.mac_asset_digest }}
+          RELEASE_ASSET_OUTPUT: ${{ runner.temp }}/gregeland-private-download/mac/${{ needs.authorize.outputs.mac_package_filename }}
+          PRIVATE_ACTIONS_READ_TOKEN: ${{ secrets.PRIVATE_ACTIONS_READ_TOKEN }}
+        run: node "${PRIVATE_TOOL_ROOT}/download-release-asset.mjs"
 
       - name: Verify and unpack the unsigned Mac app without executing it
         if: needs.authorize.outputs.mac_enabled == 'true'

@@ -109,27 +109,27 @@ export async function resolvePrivateRelease({ registryFile, gameId, sourceSha, v
   if (targets.mac && !config.mac.enabled) throw new Error("selected release profile requires a disabled Mac target");
 
   const workflow = PRIVATE_WORKFLOWS.get(gameId);
-  let webArtifactName = config.web.enabled ? `${config.slug}-${version}-web-gpkg` : "";
+  let webAssetName = config.web.enabled ? `${config.slug}-${version}-web.gpkg` : "";
   let webPackageFilename = config.web.enabled ? `${config.slug}-${version}-web.gpkg` : "";
-  let macArtifactName = config.mac.enabled ? `${config.slug}-${version}-mac-gpkg` : "";
+  let macAssetName = config.mac.enabled ? `${config.slug}-${version}-mac.gpkg` : "";
   let macPackageFilename = config.mac.enabled ? `${config.slug}-${version}-mac.gpkg` : "";
-  let candidateArtifactNames = [webArtifactName, macArtifactName].filter(Boolean);
+  let candidateAssetNames = [webAssetName, macAssetName].filter(Boolean);
   if (workflow.packageStyle === "motion-static") {
     const sourceAbbreviation = sourceSha.slice(0, 12);
     const motionStem = (slug) => `${slug}-${version}-${sourceAbbreviation}-web`;
-    webArtifactName = motionStem(config.slug);
-    webPackageFilename = `${webArtifactName}.gpkg`;
-    macArtifactName = "";
+    webAssetName = `${motionStem(config.slug)}.gpkg`;
+    webPackageFilename = webAssetName;
+    macAssetName = "";
     macPackageFilename = "";
-    candidateArtifactNames = [motionStem("web-dodge"), motionStem("motion-tracker")];
+    candidateAssetNames = [`${motionStem("web-dodge")}.gpkg`, `${motionStem("motion-tracker")}.gpkg`];
   } else if (workflow.packageStyle === "motion-native") {
     const sourceAbbreviation = sourceSha.slice(0, 12);
     const motionStem = (slug) => `${slug}-${version}-${sourceAbbreviation}-mac`;
-    webArtifactName = "";
+    webAssetName = "";
     webPackageFilename = "";
-    macArtifactName = motionStem(config.slug);
-    macPackageFilename = `${macArtifactName}.gpkg`;
-    candidateArtifactNames = [motionStem("balloon"), motionStem("labyrinth")];
+    macAssetName = `${motionStem(config.slug)}.gpkg`;
+    macPackageFilename = macAssetName;
+    candidateAssetNames = [`${motionStem("balloon")}.gpkg`, `${motionStem("labyrinth")}.gpkg`];
   }
   const sourceWorkflowName = workflow.packageStyle === "motion-static"
     ? `Static candidates from ${version} (push)`
@@ -160,11 +160,11 @@ export async function resolvePrivateRelease({ registryFile, gameId, sourceSha, v
     bundleIdentifier: game.bundleIdentifier,
     candidateWebEnabled: config.web.enabled,
     candidateMacEnabled: config.mac.enabled,
-    webArtifactName,
+    webAssetName,
     webPackageFilename,
-    macArtifactName,
+    macAssetName,
     macPackageFilename,
-    candidateArtifactNames
+    candidateAssetNames
   };
 }
 

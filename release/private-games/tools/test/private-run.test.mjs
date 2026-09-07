@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { selectCandidateArtifacts, validateAnnotatedTag, validateCandidateRun, validateTagReference } from "../private-run.mjs";
+import { selectCandidateReleaseAssets, validateAnnotatedTag, validateCandidateRelease, validateCandidateRun, validateTagReference } from "../private-run.mjs";
 
 const runId = 32920663099;
 const sourceSha = "b".repeat(40);
@@ -23,14 +23,25 @@ function run(overrides = {}) {
   };
 }
 
-function artifact(id, name, overrides = {}) {
+function asset(id, name, overrides = {}) {
   return {
     id,
     name,
-    size_in_bytes: 1024,
-    expired: false,
+    size: 1024,
+    state: "uploaded",
     digest: `sha256:${"c".repeat(64)}`,
-    workflow_run: { id: runId, head_sha: sourceSha },
+    ...overrides
+  };
+}
+
+function release(overrides = {}) {
+  return {
+    id: 42,
+    tag_name: version,
+    target_commitish: sourceSha,
+    draft: false,
+    prerelease: true,
+    assets: [],
     ...overrides
   };
 }
@@ -66,47 +77,51 @@ test("version tag references resolve through bounded annotated tags", () => {
   assert.throws(() => validateAnnotatedTag({ sha: tagSha, object: { type: "blob", sha: sourceSha } }, tagSha), /type/);
 });
 
-test("candidate artifact set is complete, bounded, and tied to the run", () => {
-  const response = {
-    total_count: 2,
-    artifacts: [
-      artifact(10, "butts-v1.2.3-web-gpkg"),
-      artifact(11, "butts-v1.2.3-mac-gpkg")
-    ]
-  };
-  const selected = selectCandidateArtifacts(response, {
+test("candidate release requires the exact published prerelease identity", () => {
+  assert.equal(validateCandidateRelease(release(), { sourceSha, version }).tag_name, version);
+  assert.throws(() => validateCandidateRelease(release({ draft: true }), { sourceSha, version }), /published prerelease/);
+  assert.throws(() => validateCandidateRelease(release({ prerelease: false }), { sourceSha, version }), /published prerelease/);
+  assert.throws(() => validateCandidateRelease(release({ target_commitish: "d".repeat(40) }), { sourceSha, version }), /source SHA/);
+});
+
+test("candidate release asset set is complete and bounded", () => {
+  const assets = [
+    asset(10, "butts-v1.2.3-web.gpkg"),
+    asset(11, "butts-v1.2.3-mac.gpkg")
+  ];
+  const selected = selectCandidateReleaseAssets(assets, {
     runId,
     sourceSha,
-    candidateArtifactNames: ["butts-v1.2.3-web-gpkg", "butts-v1.2.3-mac-gpkg"],
+    candidateAssetNames: ["butts-v1.2.3-web.gpkg", "butts-v1.2.3-mac.gpkg"],
     candidateWebEnabled: true,
     candidateMacEnabled: true,
-    webArtifactName: "butts-v1.2.3-web-gpkg",
-    macArtifactName: "butts-v1.2.3-mac-gpkg"
+    webAssetName: "butts-v1.2.3-web.gpkg",
+    macAssetName: "butts-v1.2.3-mac.gpkg"
   });
   assert.equal(selected.web.id, 10);
   assert.equal(selected.mac.id, 11);
 });
 
-test("candidate artifact validation rejects hidden, expired, or mismatched data", () => {
+test("candidate release asset validation rejects extra, incomplete, or mismatched data", () => {
   const expected = {
     runId,
     sourceSha,
-    candidateArtifactNames: ["butts-v1.2.3-web-gpkg"],
+    candidateAssetNames: ["butts-v1.2.3-web.gpkg"],
     candidateWebEnabled: true,
     candidateMacEnabled: false,
-    webArtifactName: "butts-v1.2.3-web-gpkg",
-    macArtifactName: ""
+    webAssetName: "butts-v1.2.3-web.gpkg",
+    macAssetName: ""
   };
-  assert.throws(() => selectCandidateArtifacts({ total_count: 2, artifacts: [artifact(10, expected.webArtifactName)] }, expected), /incomplete/);
-  assert.throws(() => selectCandidateArtifacts({ total_count: 1, artifacts: [artifact(10, expected.webArtifactName, { expired: true })] }, expected), /expired/);
-  assert.throws(() => selectCandidateArtifacts({ total_count: 1, artifacts: [artifact(10, expected.webArtifactName, { digest: null })] }, expected), /digest/);
-  assert.throws(() => selectCandidateArtifacts({ total_count: 1, artifacts: [artifact(10, expected.webArtifactName, { workflow_run: { id: 99, head_sha: sourceSha } })] }, expected), /identity/);
+  assert.throws(() => selectCandidateReleaseAssets([], expected), /unexpected asset count/);
+  assert.throws(() => selectCandidateReleaseAssets([asset(10, expected.webAssetName, { state: "new" })], expected), /not uploaded/);
+  assert.throws(() => selectCandidateReleaseAssets([asset(10, expected.webAssetName, { digest: null })], expected), /digest/);
+  assert.throws(() => selectCandidateReleaseAssets([asset(10, "other-v1.2.3-web.gpkg")], expected), /unexpected/);
 });
 
 test("a shared Motion run must contain both exact packages while selecting one", () => {
   const shortSha = sourceSha.slice(0, 12);
-  const dodge = `web-dodge-${version}-${shortSha}-web`;
-  const tracker = `motion-tracker-${version}-${shortSha}-web`;
+  const dodge = `web-dodge-${version}-${shortSha}-web.gpkg`;
+  const tracker = `motion-tracker-${version}-${shortSha}-web.gpkg`;
   const motionRun = run({
     repository: { full_name: "geland/motion-games" },
     name: `Static candidates from ${version} (push)`,
@@ -120,50 +135,41 @@ test("a shared Motion run must contain both exact packages while selecting one",
     workflow: ".github/workflows/static-release-candidates.yml",
     workflowName: `Static candidates from ${version} (push)`
   }).path, ".github/workflows/static-release-candidates.yml");
-  const selected = selectCandidateArtifacts({
-    total_count: 2,
-    artifacts: [artifact(20, dodge), artifact(21, tracker)]
-  }, {
+  const selected = selectCandidateReleaseAssets([asset(20, dodge), asset(21, tracker)], {
     runId,
     sourceSha,
-    candidateArtifactNames: [dodge, tracker],
+    candidateAssetNames: [dodge, tracker],
     candidateWebEnabled: true,
     candidateMacEnabled: false,
-    webArtifactName: tracker,
-    macArtifactName: ""
+    webAssetName: tracker,
+    macAssetName: ""
   });
   assert.equal(selected.web.id, 21);
-  const selectedDodge = selectCandidateArtifacts({
-    total_count: 2,
-    artifacts: [artifact(20, dodge), artifact(21, tracker)]
-  }, {
+  const selectedDodge = selectCandidateReleaseAssets([asset(20, dodge), asset(21, tracker)], {
     runId,
     sourceSha,
-    candidateArtifactNames: [dodge, tracker],
+    candidateAssetNames: [dodge, tracker],
     candidateWebEnabled: true,
     candidateMacEnabled: false,
-    webArtifactName: dodge,
-    macArtifactName: ""
+    webAssetName: dodge,
+    macAssetName: ""
   });
   assert.equal(selectedDodge.web.id, 20);
-  assert.throws(() => selectCandidateArtifacts({
-    total_count: 1,
-    artifacts: [artifact(20, dodge)]
-  }, {
+  assert.throws(() => selectCandidateReleaseAssets([asset(20, dodge)], {
     runId,
     sourceSha,
-    candidateArtifactNames: [dodge, tracker],
+    candidateAssetNames: [dodge, tracker],
     candidateWebEnabled: true,
     candidateMacEnabled: false,
-    webArtifactName: dodge,
-    macArtifactName: ""
-  }), /unexpected artifact count/);
+    webAssetName: dodge,
+    macAssetName: ""
+  }), /unexpected asset count/);
 });
 
 test("a shared native Motion run requires both same-run Mac packages while selecting one", () => {
   const shortSha = sourceSha.slice(0, 12);
-  const balloon = `balloon-${version}-${shortSha}-mac`;
-  const labyrinth = `labyrinth-${version}-${shortSha}-mac`;
+  const balloon = `balloon-${version}-${shortSha}-mac.gpkg`;
+  const labyrinth = `labyrinth-${version}-${shortSha}-mac.gpkg`;
   const motionRun = run({
     repository: { full_name: "geland/motion-games" },
     name: `Native candidates from ${version} (push)`,
@@ -181,28 +187,19 @@ test("a shared native Motion run requires both same-run Mac packages while selec
   const expected = {
     runId,
     sourceSha,
-    candidateArtifactNames: [balloon, labyrinth],
+    candidateAssetNames: [balloon, labyrinth],
     candidateWebEnabled: false,
     candidateMacEnabled: true,
-    webArtifactName: "",
-    macArtifactName: balloon
+    webAssetName: "",
+    macAssetName: balloon
   };
-  const selected = selectCandidateArtifacts({
-    total_count: 2,
-    artifacts: [artifact(30, balloon), artifact(31, labyrinth)]
-  }, expected);
+  const selected = selectCandidateReleaseAssets([asset(30, balloon), asset(31, labyrinth)], expected);
   assert.equal(selected.web, null);
   assert.equal(selected.mac.id, 30);
 
-  assert.throws(() => selectCandidateArtifacts({
-    total_count: 2,
-    artifacts: [
-      artifact(30, balloon),
-      artifact(31, labyrinth, { workflow_run: { id: runId, head_sha: "d".repeat(40) } })
-    ]
-  }, expected), /identity/);
-  assert.throws(() => selectCandidateArtifacts({
-    total_count: 1,
-    artifacts: [artifact(30, balloon)]
-  }, expected), /unexpected artifact count/);
+  assert.throws(() => selectCandidateReleaseAssets([
+    asset(30, balloon),
+    asset(31, labyrinth, { size: 0 })
+  ], expected), /size/);
+  assert.throws(() => selectCandidateReleaseAssets([asset(30, balloon)], expected), /unexpected asset count/);
 });

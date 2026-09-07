@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { appendFile } from "node:fs/promises";
 import process from "node:process";
-import { selectCandidateArtifacts, validateAnnotatedTag, validateCandidateRun, validateTagReference } from "./private-run.mjs";
+import { selectCandidateReleaseAssets, validateAnnotatedTag, validateCandidateRelease, validateCandidateRun, validateTagReference } from "./private-run.mjs";
 
 if (process.argv[2] !== "verify") throw new Error("usage: private-run-cli.mjs verify");
 
@@ -46,23 +46,26 @@ validateCandidateRun(run, {
   workflowName: required("SOURCE_WORKFLOW_NAME")
 });
 
-const artifactsResponse = await fetchJson(`${apiRoot}/actions/runs/${runId}/artifacts?per_page=100`, headers);
-const selected = selectCandidateArtifacts(artifactsResponse, {
+const release = validateCandidateRelease(
+  await fetchJson(`${apiRoot}/releases/tags/${encodeURIComponent(version)}`, headers),
+  { sourceSha, version }
+);
+const selected = selectCandidateReleaseAssets(release.assets, {
   runId,
   sourceSha,
-  candidateArtifactNames: requiredArtifactNames("CANDIDATE_ARTIFACT_NAMES_JSON"),
+  candidateAssetNames: requiredAssetNames("CANDIDATE_ASSET_NAMES_JSON"),
   candidateWebEnabled: requiredBoolean("CANDIDATE_WEB_ENABLED"),
   candidateMacEnabled: requiredBoolean("CANDIDATE_MAC_ENABLED"),
-  webArtifactName: process.env.WEB_ARTIFACT_NAME ?? "",
-  macArtifactName: process.env.MAC_ARTIFACT_NAME ?? ""
+  webAssetName: process.env.WEB_ASSET_NAME ?? "",
+  macAssetName: process.env.MAC_ASSET_NAME ?? ""
 });
 
 const output = required("GITHUB_OUTPUT");
 const values = {
-  web_artifact_id: selected.web?.id ?? "",
-  web_artifact_digest: selected.web?.digest ?? "",
-  mac_artifact_id: selected.mac?.id ?? "",
-  mac_artifact_digest: selected.mac?.digest ?? ""
+  web_asset_id: selected.web?.id ?? "",
+  web_asset_digest: selected.web?.digest ?? "",
+  mac_asset_id: selected.mac?.id ?? "",
+  mac_asset_digest: selected.mac?.digest ?? ""
 };
 await appendFile(output, Object.entries(values).map(([key, value]) => `${key}=${value}\n`).join(""));
 
@@ -87,7 +90,7 @@ function requiredBoolean(name) {
   return value === "true";
 }
 
-function requiredArtifactNames(name) {
+function requiredAssetNames(name) {
   const raw = required(name);
   let value;
   try {
