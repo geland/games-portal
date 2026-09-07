@@ -109,6 +109,11 @@ export async function resolvePrivateRelease({ registryFile, gameId, sourceSha, v
   if (targets.mac && !config.mac.enabled) throw new Error("selected release profile requires a disabled Mac target");
 
   const workflow = PRIVATE_WORKFLOWS.get(gameId);
+  const candidateReleaseTag = workflow.packageStyle === "motion-static"
+    ? `${version}-static-candidates`
+    : workflow.packageStyle === "motion-native"
+      ? `${version}-native-candidates`
+      : version;
   let webAssetName = config.web.enabled ? `${config.slug}-${version}-web.gpkg` : "";
   let webPackageFilename = config.web.enabled ? `${config.slug}-${version}-web.gpkg` : "";
   let macAssetName = config.mac.enabled ? `${config.slug}-${version}-mac.gpkg` : "";
@@ -160,6 +165,7 @@ export async function resolvePrivateRelease({ registryFile, gameId, sourceSha, v
     bundleIdentifier: game.bundleIdentifier,
     candidateWebEnabled: config.web.enabled,
     candidateMacEnabled: config.mac.enabled,
+    candidateReleaseTag,
     webAssetName,
     webPackageFilename,
     macAssetName,

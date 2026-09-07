@@ -36,6 +36,7 @@ if (command === "resolve") {
     bundle_identifier: release.bundleIdentifier,
     candidate_web_enabled: String(release.candidateWebEnabled),
     candidate_mac_enabled: String(release.candidateMacEnabled),
+    candidate_release_tag: release.candidateReleaseTag,
     web_asset_name: release.webAssetName,
     web_package_filename: release.webPackageFilename,
     mac_asset_name: release.macAssetName,

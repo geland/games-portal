@@ -61,8 +61,10 @@ test("production receives only constrained candidate release assets", () => {
   assert.match(runVerifier, /\/git\/ref\/tags\//);
   assert.match(runVerifier, /\/git\/ref\/heads\//);
   assert.match(production, /CANDIDATE_ASSET_NAMES_JSON:/);
+  assert.match(production, /CANDIDATE_RELEASE_TAG:/);
   assert.match(production, /web_package_filename/);
   assert.ok(runVerifier.indexOf("/git/ref/tags/") < runVerifier.indexOf("/actions/runs/"));
+  assert.match(runVerifier, /candidate release tag does not resolve to the approved source SHA/);
 });
 
 test("source candidate packages data into prerelease assets with no production credential path", () => {

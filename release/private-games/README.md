@@ -15,11 +15,11 @@ package before signing or publication. It never checks out or executes private
 source.
 
 `web-dodge` and `motion-tracker` share one `geland/motion-games` tag workflow
-run. Each central release selects only its exact SHA-qualified package, while
+run and one private `${version}-static-candidates` prerelease. Each central release selects only its exact SHA-qualified package, while
 the verifier requires both expected release assets to be present and rejects
 any extra, missing, renamed, incomplete, or digest-mismatched asset. `balloon` and `labyrinth`
-use the same fail-closed pattern in a separate native candidate workflow: one
-exact-tag run must contain both SHA-qualified Mac packages, while a central
+use the same fail-closed pattern in a separate `${version}-native-candidates`
+prerelease: one exact-tag run must contain both SHA-qualified Mac packages, while a central
 release selects and signs only the requested app. The native contract was
 integrated against `geland/motion-games` commit
 `56947de9ea16e9e4884295488101e9bb11f0e08e` and requires these exact bundle
