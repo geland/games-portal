@@ -1,0 +1,16 @@
+{
+  "slug": "lines-drawn",
+  "projectPath": ".",
+  "godotVersion": "4.6.2",
+  "web": {
+    "enabled": true,
+    "preset": "LAN Web Preview",
+    "entry": "index.html"
+  },
+  "mac": {
+    "enabled": true,
+    "preset": "macOS Preview",
+    "bundleName": "Lines Drawn",
+    "entitlements": null
+  }
+}

@@ -7,6 +7,12 @@
       "bundleIdentifier": "com.gregeland.butts",
       "profiles": ["web", "web+mac"]
     },
+    "lines-drawn": {
+      "repository": "geland/lines-drawn",
+      "config": "release/private-games/configs/lines-drawn.json",
+      "bundleIdentifier": "com.gregeland.linesdrawn",
+      "profiles": ["web", "web+mac"]
+    },
     "blend-in": {
       "repository": "geland/blend-in",
       "config": "release/private-games/configs/blend-in.json",
