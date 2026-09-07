@@ -78,7 +78,8 @@ test("private template contains only unprivileged packaging, not central source 
 
 test("private game candidate workflow has no production credential path", () => {
   assert.match(privateCandidateWorkflow, /name: Build game release candidate/);
-  assert.match(privateCandidateWorkflow, /retention-days: 1/);
+  assert.match(privateCandidateWorkflow, /publish-candidate-release\.mjs/);
+  assert.doesNotMatch(privateCandidateWorkflow, /actions\/upload-artifact@|retention-days:/);
   assert.doesNotMatch(privateCandidateWorkflow, /environment:|\$\{\{\s*secrets\.|R2_ACCESS_KEY|R2_SECRET_ACCESS_KEY|APPLE_DEVELOPER_ID|sign-notarize-macos|publish-release\.mjs/);
 });
 

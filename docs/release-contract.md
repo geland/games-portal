@@ -117,8 +117,9 @@ notarization, and publication.
 1. Validate a `vMAJOR.MINOR.PATCH` version and build from its exact commit. The
    central source workflows are manual-only. Private game repositories may use
    an exact tag or manual dispatch to build an unsigned candidate, but only the
-   GitHub-recorded exact-tag run is eligible for central publication; manual
-   candidates are validation evidence only.
+   GitHub-recorded exact-tag run and its exact prerelease assets are eligible for
+   central publication. Manual candidates are validation evidence only and do
+   not upload candidate data. Candidate handoff must not use Actions artifacts.
 2. Run automated tests and platform smoke checks.
 3. Sign, notarize, staple, and verify every Mac application.
 4. Upload Web and Mac artifacts to new version keys.

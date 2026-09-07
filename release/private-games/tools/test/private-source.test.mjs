@@ -24,9 +24,9 @@ test("private releases resolve only fixed repositories and profiles", async () =
   assert.equal(release.webEnabled, true);
   assert.equal(release.macEnabled, false);
   assert.equal(release.candidateMacEnabled, true);
-  assert.equal(release.webArtifactName, "butts-v1.2.3-web-gpkg");
+  assert.equal(release.webAssetName, "butts-v1.2.3-web.gpkg");
   assert.equal(release.webPackageFilename, "butts-v1.2.3-web.gpkg");
-  assert.deepEqual(release.candidateArtifactNames, ["butts-v1.2.3-web-gpkg", "butts-v1.2.3-mac-gpkg"]);
+  assert.deepEqual(release.candidateAssetNames, ["butts-v1.2.3-web.gpkg", "butts-v1.2.3-mac.gpkg"]);
 });
 
 test("Lines Drawn resolves exact Web and Mac candidate identities", async () => {
@@ -42,11 +42,11 @@ test("Lines Drawn resolves exact Web and Mac candidate identities", async () => 
   assert.equal(release.repository, "geland/lines-drawn");
   assert.equal(release.sourceWorkflow, ".github/workflows/release.yml");
   assert.equal(release.bundleIdentifier, "com.gregeland.linesdrawn");
-  assert.equal(release.webArtifactName, "lines-drawn-v1.0.0-web-gpkg");
-  assert.equal(release.macArtifactName, "lines-drawn-v1.0.0-mac-gpkg");
-  assert.deepEqual(release.candidateArtifactNames, [
-    "lines-drawn-v1.0.0-web-gpkg",
-    "lines-drawn-v1.0.0-mac-gpkg"
+  assert.equal(release.webAssetName, "lines-drawn-v1.0.0-web.gpkg");
+  assert.equal(release.macAssetName, "lines-drawn-v1.0.0-mac.gpkg");
+  assert.deepEqual(release.candidateAssetNames, [
+    "lines-drawn-v1.0.0-web.gpkg",
+    "lines-drawn-v1.0.0-mac.gpkg"
   ]);
 });
 
@@ -64,13 +64,13 @@ test("Commanders resolves exact Web and Mac candidate identities", async () => {
   assert.equal(release.sourceWorkflow, ".github/workflows/release.yml");
   assert.equal(release.sourceWorkflowName, "Build game release candidate");
   assert.equal(release.bundleIdentifier, "com.gregeland.commanders");
-  assert.equal(release.webArtifactName, "commanders-v1.0.0-web-gpkg");
+  assert.equal(release.webAssetName, "commanders-v1.0.0-web.gpkg");
   assert.equal(release.webPackageFilename, "commanders-v1.0.0-web.gpkg");
-  assert.equal(release.macArtifactName, "commanders-v1.0.0-mac-gpkg");
+  assert.equal(release.macAssetName, "commanders-v1.0.0-mac.gpkg");
   assert.equal(release.macPackageFilename, "commanders-v1.0.0-mac.gpkg");
-  assert.deepEqual(release.candidateArtifactNames, [
-    "commanders-v1.0.0-web-gpkg",
-    "commanders-v1.0.0-mac-gpkg"
+  assert.deepEqual(release.candidateAssetNames, [
+    "commanders-v1.0.0-web.gpkg",
+    "commanders-v1.0.0-mac.gpkg"
   ]);
 });
 
@@ -87,11 +87,11 @@ test("Motion targets resolve one package from their shared exact-tag run", async
   assert.equal(release.repository, "geland/motion-games");
   assert.equal(release.sourceWorkflow, ".github/workflows/static-release-candidates.yml");
   assert.equal(release.sourceWorkflowName, "Static candidates from v2.3.4 (push)");
-  assert.equal(release.webArtifactName, `motion-tracker-v2.3.4-${sha.slice(0, 12)}-web`);
-  assert.equal(release.webPackageFilename, `${release.webArtifactName}.gpkg`);
-  assert.deepEqual(release.candidateArtifactNames, [
-    `web-dodge-v2.3.4-${sha.slice(0, 12)}-web`,
-    `motion-tracker-v2.3.4-${sha.slice(0, 12)}-web`
+  assert.equal(release.webAssetName, `motion-tracker-v2.3.4-${sha.slice(0, 12)}-web.gpkg`);
+  assert.equal(release.webPackageFilename, release.webAssetName);
+  assert.deepEqual(release.candidateAssetNames, [
+    `web-dodge-v2.3.4-${sha.slice(0, 12)}-web.gpkg`,
+    `motion-tracker-v2.3.4-${sha.slice(0, 12)}-web.gpkg`
   ]);
 });
 
@@ -115,11 +115,11 @@ test("native Motion targets resolve one Mac package from their shared exact-tag 
   assert.equal(release.candidateMacEnabled, true);
   assert.equal(release.macBundleName, "Motion Balloon");
   assert.equal(release.bundleIdentifier, "com.gregeland.motionballoon");
-  assert.equal(release.macArtifactName, "balloon-v1.0.0-56947de9ea16-mac");
+  assert.equal(release.macAssetName, "balloon-v1.0.0-56947de9ea16-mac.gpkg");
   assert.equal(release.macPackageFilename, "balloon-v1.0.0-56947de9ea16-mac.gpkg");
-  assert.deepEqual(release.candidateArtifactNames, [
-    "balloon-v1.0.0-56947de9ea16-mac",
-    "labyrinth-v1.0.0-56947de9ea16-mac"
+  assert.deepEqual(release.candidateAssetNames, [
+    "balloon-v1.0.0-56947de9ea16-mac.gpkg",
+    "labyrinth-v1.0.0-56947de9ea16-mac.gpkg"
   ]);
 
   const labyrinth = await resolvePrivateRelease({
@@ -133,8 +133,8 @@ test("native Motion targets resolve one Mac package from their shared exact-tag 
   });
   assert.equal(labyrinth.macBundleName, "Motion Labyrinth");
   assert.equal(labyrinth.bundleIdentifier, "com.gregeland.motionlabyrinth");
-  assert.equal(labyrinth.macArtifactName, "labyrinth-v1.0.0-56947de9ea16-mac");
-  assert.deepEqual(labyrinth.candidateArtifactNames, release.candidateArtifactNames);
+  assert.equal(labyrinth.macAssetName, "labyrinth-v1.0.0-56947de9ea16-mac.gpkg");
+  assert.deepEqual(labyrinth.candidateAssetNames, release.candidateAssetNames);
 });
 
 test("private release identities are strict", async () => {

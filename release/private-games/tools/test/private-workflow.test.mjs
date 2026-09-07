@@ -31,7 +31,7 @@ test("private publication is manual-only and repository choices are fixed", () =
 
 test("every private-release third-party action is pinned", () => {
   const uses = [...workflow.matchAll(/^\s+uses:\s+([^\s#]+)/gm)].map((match) => match[1]);
-  assert.ok(uses.length >= 4);
+  assert.ok(uses.length >= 2);
   for (const action of uses) assert.match(action, /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+@[0-9a-f]{40}$/);
 });
 
@@ -43,32 +43,35 @@ test("authorization has no environment or credential", () => {
   assert.doesNotMatch(authorize, /\$\{\{\s*secrets\./);
 });
 
-test("production receives only constrained candidate data", () => {
+test("production receives only constrained candidate release assets", () => {
   const production = job("verify-sign-publish");
   assert.match(production, /environment:\n      name: game-release-production/);
   assert.doesNotMatch(production.slice(0, production.indexOf("    steps:")), /runner\.temp/);
   assert.equal((production.match(/uses: actions\/checkout@/g) ?? []).length, 1);
   assert.doesNotMatch(production, /repository: \$\{\{ needs\.authorize\.outputs\.source_repository \}\}\n\s+ref:/);
   assert.match(production, /test ! -e private-source/);
-  assert.equal((production.match(/artifact-ids:/g) ?? []).length, 2);
-  assert.equal((production.match(/digest-mismatch: error/g) ?? []).length, 2);
+  assert.equal((production.match(/download-release-asset\.mjs/g) ?? []).length, 2);
+  assert.doesNotMatch(production, /actions\/download-artifact@|actions\/upload-artifact@/);
   assert.equal((production.match(/artifact-container-cli\.mjs" unpack/g) ?? []).length, 2);
-  assert.ok(production.indexOf("private-run-cli.mjs\" verify") < production.indexOf("actions/download-artifact@"));
+  assert.ok(production.indexOf("private-run-cli.mjs\" verify") < production.indexOf("download-release-asset.mjs"));
+  assert.ok(production.indexOf("download-release-asset.mjs") < production.indexOf("artifact-container-cli.mjs\" unpack"));
   assert.ok(production.indexOf("artifact-container-cli.mjs\" unpack") < production.indexOf("APPLE_DEVELOPER_ID_P12_BASE64"));
   assert.ok(production.indexOf("sign-notarize-macos.sh") < production.indexOf("publish-release.mjs"));
   assert.match(production, /MAC_ENTITLEMENTS:.*mac_entitlements != '' && format\('\{0\}\/trusted\/\{1\}'[^\n]+\|\| ''/);
   assert.match(runVerifier, /\/git\/ref\/tags\//);
   assert.match(runVerifier, /\/git\/ref\/heads\//);
-  assert.match(production, /CANDIDATE_ARTIFACT_NAMES_JSON:/);
+  assert.match(production, /CANDIDATE_ASSET_NAMES_JSON:/);
   assert.match(production, /web_package_filename/);
   assert.ok(runVerifier.indexOf("/git/ref/tags/") < runVerifier.indexOf("/actions/runs/"));
 });
 
-test("source candidate packages data with no production credential path", () => {
+test("source candidate packages data into prerelease assets with no production credential path", () => {
   assert.match(candidate, /tags:\n      - 'v\*\.\*\.\*'/);
   assert.equal((candidate.match(/artifact-container-cli\.mjs pack/g) ?? []).length, 2);
   assert.match(candidate, /Re-verify exact clean source before artifact handoff/);
-  assert.match(candidate, /retention-days: 1/);
+  assert.match(candidate, /publish-candidate-release\.mjs/);
+  assert.match(candidate, /contents: write/);
+  assert.doesNotMatch(candidate, /actions\/upload-artifact@|retention-days:/);
   assert.doesNotMatch(candidate, /environment:|\$\{\{\s*secrets\.|R2_ACCESS_KEY|APPLE_DEVELOPER_ID|sign-notarize-macos|publish-release\.mjs/);
 });
 

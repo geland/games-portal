@@ -71,7 +71,7 @@ jobs:
     runs-on: macos-15
     timeout-minutes: 120
     permissions:
-      contents: read
+      contents: write
     steps:
       - name: Check out the authorized commit
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
@@ -179,26 +179,15 @@ jobs:
           test "$(git rev-parse HEAD)" = "${EXPECTED_COMMIT}"
           test -z "$(git status --porcelain=v1 --untracked-files=all)"
 
-      - name: Upload the constrained Web data package
-        if: steps.game.outputs.web_enabled == 'true'
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
-        with:
-          name: ${{ steps.game.outputs.slug }}-${{ needs.authorize.outputs.version }}-web-gpkg
-          path: ${{ runner.temp }}/gregeland-release/packages/${{ steps.game.outputs.slug }}-${{ needs.authorize.outputs.version }}-web.gpkg
-          if-no-files-found: error
-          compression-level: 0
-          retention-days: 1
-          overwrite: false
-          include-hidden-files: false
-
-      - name: Upload the constrained unsigned Mac data package
-        if: steps.game.outputs.mac_enabled == 'true'
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
-        with:
-          name: ${{ steps.game.outputs.slug }}-${{ needs.authorize.outputs.version }}-mac-gpkg
-          path: ${{ runner.temp }}/gregeland-release/packages/${{ steps.game.outputs.slug }}-${{ needs.authorize.outputs.version }}-mac.gpkg
-          if-no-files-found: error
-          compression-level: 0
-          retention-days: 1
-          overwrite: false
-          include-hidden-files: false
+      - name: Publish constrained candidate data without Actions storage
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_REPOSITORY: ${{ github.repository }}
+          RELEASE_VERSION: ${{ needs.authorize.outputs.version }}
+          SOURCE_COMMIT: ${{ needs.authorize.outputs.commit }}
+          WEB_ENABLED: ${{ steps.game.outputs.web_enabled }}
+          WEB_PACKAGE: ${{ runner.temp }}/gregeland-release/packages/${{ steps.game.outputs.slug }}-${{ needs.authorize.outputs.version }}-web.gpkg
+          MAC_ENABLED: ${{ steps.game.outputs.mac_enabled }}
+          MAC_PACKAGE: ${{ runner.temp }}/gregeland-release/packages/${{ steps.game.outputs.slug }}-${{ needs.authorize.outputs.version }}-mac.gpkg
+        run: node .github/release-tools/publish-candidate-release.mjs
