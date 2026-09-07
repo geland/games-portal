@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { selectCandidateReleaseAssets, validateAnnotatedTag, validateCandidateRelease, validateCandidateRun, validateTagReference } from "../private-run.mjs";
+import { selectCandidateReleaseAssets, validateAnnotatedTag, validateCandidateRelease, validateCandidateReleaseTagReference, validateCandidateRun, validateTagReference } from "../private-run.mjs";
 
 const runId = 32920663099;
 const sourceSha = "b".repeat(40);
@@ -82,6 +82,28 @@ test("candidate release requires the exact published prerelease identity", () =>
   assert.throws(() => validateCandidateRelease(release({ draft: true }), { sourceSha, version }), /published prerelease/);
   assert.throws(() => validateCandidateRelease(release({ prerelease: false }), { sourceSha, version }), /published prerelease/);
   assert.throws(() => validateCandidateRelease(release({ target_commitish: "d".repeat(40) }), { sourceSha, version }), /source SHA/);
+});
+
+test("Motion candidate release tags resolve to the exact approved source", () => {
+  const staticTag = `${version}-static-candidates`;
+  assert.deepEqual(
+    validateCandidateReleaseTagReference(
+      { ref: `refs/tags/${staticTag}`, object: { type: "commit", sha: sourceSha } },
+      staticTag
+    ),
+    { type: "commit", sha: sourceSha }
+  );
+  assert.equal(
+    validateCandidateRelease(release({ tag_name: staticTag }), { sourceSha, version, releaseTag: staticTag }).tag_name,
+    staticTag
+  );
+  assert.throws(
+    () => validateCandidateReleaseTagReference(
+      { ref: `refs/tags/${version}-native-candidates`, object: { type: "commit", sha: sourceSha } },
+      staticTag
+    ),
+    /does not match/
+  );
 });
 
 test("candidate release asset set is complete and bounded", () => {

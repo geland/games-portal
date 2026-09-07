@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { appendFile } from "node:fs/promises";
 import process from "node:process";
-import { selectCandidateReleaseAssets, validateAnnotatedTag, validateCandidateRelease, validateCandidateRun, validateTagReference } from "./private-run.mjs";
+import { selectCandidateReleaseAssets, validateAnnotatedTag, validateCandidateRelease, validateCandidateReleaseTagReference, validateCandidateRun, validateTagReference } from "./private-run.mjs";
 
 if (process.argv[2] !== "verify") throw new Error("usage: private-run-cli.mjs verify");
 
@@ -14,6 +14,7 @@ const runId = Number(runIdText);
 if (!Number.isSafeInteger(runId)) throw new Error("BUILD_RUN_ID is too large");
 const sourceSha = required("SOURCE_SHA");
 const version = required("RELEASE_VERSION");
+const candidateReleaseTag = required("CANDIDATE_RELEASE_TAG");
 const token = required("PRIVATE_ACTIONS_READ_TOKEN");
 const apiRoot = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(name)}`;
 const headers = {
@@ -36,6 +37,19 @@ if (target.sha !== sourceSha) throw new Error("version tag does not resolve to t
 const ambiguousBranch = await fetchJson(`${apiRoot}/git/ref/heads/${encodeURIComponent(version)}`, headers, true);
 if (ambiguousBranch !== null) throw new Error("a branch conflicts with the approved version tag name");
 
+if (candidateReleaseTag !== version) {
+  const candidateReference = await fetchJson(`${apiRoot}/git/ref/tags/${encodeURIComponent(candidateReleaseTag)}`, headers);
+  let candidateTarget = validateCandidateReleaseTagReference(candidateReference, candidateReleaseTag);
+  const seenCandidateTags = new Set();
+  for (let depth = 0; candidateTarget.type === "tag"; depth += 1) {
+    if (depth >= 5 || seenCandidateTags.has(candidateTarget.sha)) throw new Error("candidate release tag indirection is invalid");
+    seenCandidateTags.add(candidateTarget.sha);
+    const annotatedTag = await fetchJson(`${apiRoot}/git/tags/${candidateTarget.sha}`, headers);
+    candidateTarget = validateAnnotatedTag(annotatedTag, candidateTarget.sha);
+  }
+  if (candidateTarget.sha !== sourceSha) throw new Error("candidate release tag does not resolve to the approved source SHA");
+}
+
 const run = await fetchJson(`${apiRoot}/actions/runs/${runId}`, headers);
 validateCandidateRun(run, {
   repository,
@@ -47,8 +61,8 @@ validateCandidateRun(run, {
 });
 
 const release = validateCandidateRelease(
-  await fetchJson(`${apiRoot}/releases/tags/${encodeURIComponent(version)}`, headers),
-  { sourceSha, version }
+  await fetchJson(`${apiRoot}/releases/tags/${encodeURIComponent(candidateReleaseTag)}`, headers),
+  { sourceSha, version, releaseTag: candidateReleaseTag }
 );
 const selected = selectCandidateReleaseAssets(release.assets, {
   runId,

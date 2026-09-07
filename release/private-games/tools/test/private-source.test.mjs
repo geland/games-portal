@@ -24,6 +24,7 @@ test("private releases resolve only fixed repositories and profiles", async () =
   assert.equal(release.webEnabled, true);
   assert.equal(release.macEnabled, false);
   assert.equal(release.candidateMacEnabled, true);
+  assert.equal(release.candidateReleaseTag, "v1.2.3");
   assert.equal(release.webAssetName, "butts-v1.2.3-web.gpkg");
   assert.equal(release.webPackageFilename, "butts-v1.2.3-web.gpkg");
   assert.deepEqual(release.candidateAssetNames, ["butts-v1.2.3-web.gpkg", "butts-v1.2.3-mac.gpkg"]);
@@ -87,6 +88,7 @@ test("Motion targets resolve one package from their shared exact-tag run", async
   assert.equal(release.repository, "geland/motion-games");
   assert.equal(release.sourceWorkflow, ".github/workflows/static-release-candidates.yml");
   assert.equal(release.sourceWorkflowName, "Static candidates from v2.3.4 (push)");
+  assert.equal(release.candidateReleaseTag, "v2.3.4-static-candidates");
   assert.equal(release.webAssetName, `motion-tracker-v2.3.4-${sha.slice(0, 12)}-web.gpkg`);
   assert.equal(release.webPackageFilename, release.webAssetName);
   assert.deepEqual(release.candidateAssetNames, [
@@ -109,6 +111,7 @@ test("native Motion targets resolve one Mac package from their shared exact-tag 
   assert.equal(release.repository, "geland/motion-games");
   assert.equal(release.sourceWorkflow, ".github/workflows/native-release-candidates.yml");
   assert.equal(release.sourceWorkflowName, "Native candidates from v1.0.0 (push)");
+  assert.equal(release.candidateReleaseTag, "v1.0.0-native-candidates");
   assert.equal(release.webEnabled, false);
   assert.equal(release.macEnabled, true);
   assert.equal(release.candidateWebEnabled, false);

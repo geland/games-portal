@@ -75,6 +75,7 @@ jobs:
       bundle_identifier: ${{ steps.release.outputs.bundle_identifier }}
       candidate_web_enabled: ${{ steps.release.outputs.candidate_web_enabled }}
       candidate_mac_enabled: ${{ steps.release.outputs.candidate_mac_enabled }}
+      candidate_release_tag: ${{ steps.release.outputs.candidate_release_tag }}
       web_asset_name: ${{ steps.release.outputs.web_asset_name }}
       web_package_filename: ${{ steps.release.outputs.web_package_filename }}
       mac_asset_name: ${{ steps.release.outputs.mac_asset_name }}
@@ -197,6 +198,7 @@ jobs:
           BUILD_RUN_ID: ${{ needs.authorize.outputs.build_run_id }}
           CANDIDATE_WEB_ENABLED: ${{ needs.authorize.outputs.candidate_web_enabled }}
           CANDIDATE_MAC_ENABLED: ${{ needs.authorize.outputs.candidate_mac_enabled }}
+          CANDIDATE_RELEASE_TAG: ${{ needs.authorize.outputs.candidate_release_tag }}
           WEB_ASSET_NAME: ${{ needs.authorize.outputs.web_asset_name }}
           MAC_ASSET_NAME: ${{ needs.authorize.outputs.mac_asset_name }}
           CANDIDATE_ASSET_NAMES_JSON: ${{ needs.authorize.outputs.candidate_asset_names_json }}

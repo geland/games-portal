@@ -1,6 +1,7 @@
 const REPOSITORY_RE = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 const SHA_RE = /^[0-9a-f]{40}$/;
 const VERSION_RE = /^v(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)$/;
+const CANDIDATE_RELEASE_TAG_RE = /^v(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)-(?:static|native)-candidates$/;
 const DIGEST_RE = /^sha256:[0-9a-f]{64}$/;
 const MAX_RELEASE_ASSET_BYTES = 2 * 1024 * 1024 * 1024 - 1;
 const APPROVED_WORKFLOWS = new Map([
@@ -48,6 +49,13 @@ export function validateTagReference(referenceValue, version) {
   return validateGitObject(reference.object, "version tag object");
 }
 
+export function validateCandidateReleaseTagReference(referenceValue, releaseTag) {
+  if (!CANDIDATE_RELEASE_TAG_RE.test(releaseTag ?? "")) throw new Error("expected candidate release tag is invalid");
+  const reference = object(referenceValue, "candidate release tag reference");
+  if (reference.ref !== `refs/tags/${releaseTag}`) throw new Error("candidate release tag reference does not match");
+  return validateGitObject(reference.object, "candidate release tag object");
+}
+
 export function validateAnnotatedTag(tagValue, expectedTagSha) {
   if (!SHA_RE.test(expectedTagSha ?? "")) throw new Error("expected annotated tag SHA is invalid");
   const tag = object(tagValue, "annotated tag");
@@ -67,8 +75,14 @@ export function validateCandidateRelease(releaseValue, expectedValue) {
   const expected = object(expectedValue, "expected candidate release");
   if (!SHA_RE.test(expected.sourceSha ?? "")) throw new Error("expected source SHA is invalid");
   if (!VERSION_RE.test(expected.version ?? "")) throw new Error("expected version is invalid");
+  const releaseTag = expected.releaseTag ?? expected.version;
+  if (releaseTag !== expected.version
+      && releaseTag !== `${expected.version}-static-candidates`
+      && releaseTag !== `${expected.version}-native-candidates`) {
+    throw new Error("expected candidate release tag is invalid");
+  }
   positiveInteger(release.id, "candidate release ID");
-  if (release.tag_name !== expected.version) throw new Error("candidate release tag does not match");
+  if (release.tag_name !== releaseTag) throw new Error("candidate release tag does not match");
   if (release.target_commitish !== expected.sourceSha) throw new Error("candidate release source SHA does not match");
   if (release.draft !== false || release.prerelease !== true) throw new Error("candidate release must be a published prerelease");
   if (!Array.isArray(release.assets)) throw new Error("candidate release assets must be an array");
