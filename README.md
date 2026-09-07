@@ -2,6 +2,14 @@
 
 The family game shelf at `games.gregeland.com`.
 
+Release operators must use the canonical runbook for the source ownership
+model: [`release/private-games/README.md`](release/private-games/README.md) for
+private `geland/*` sources, or
+[`release/public-games/README.md`](release/public-games/README.md) for Judah's
+approved public sources. These define immutable identity, protected
+publication, and live verification; source repositories contain only
+game-specific validation notes.
+
 The portal itself is served as free Cloudflare Worker static assets. Versioned
 Godot Web exports and notarized macOS downloads live in the
 `gregeland-games-releases` R2 bucket and are served from its public custom

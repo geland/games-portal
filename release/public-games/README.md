@@ -88,3 +88,43 @@ R2_PUBLIC_BASE=https://play.games.gregeland.com
 Use one dedicated bucket-scoped R2 parent credential for this central release
 workflow. The publisher derives a two-hour credential scoped further to only
 the selected game's version/download/manifest prefixes.
+
+## Operator runbook
+
+Publishing is a production mutation. Obtain explicit user approval for the
+specific game, exact source SHA, version, and enabled targets before dispatch.
+Approval to edit release automation is not approval to publish a game.
+
+1. Read the selected public source repository's instructions, inspect its
+   current status, and validate the exact committed snapshot. Preserve its
+   ownership and visibility; do not create a private mirror or push release
+   machinery or credentials into Judah's repository.
+2. Record the full lowercase 40-character public source SHA. Confirm it exists
+   in the fixed repository from `registry.json`. Choose an unused
+   `vMAJOR.MINOR.PATCH` greater than every stable or indexed version. Never
+   overwrite an existing version or use an uncommitted local tree.
+3. Dispatch the protected workflow from portal `main`:
+
+   ```sh
+   gh workflow run release-public-game.yml \
+     --repo geland/games-portal \
+     --ref main \
+     -f game=<astro-bro|racing-maze|tower-defense> \
+     -f source_sha=<40-character-source-sha> \
+     -f version=<version> \
+     -f resume_existing=false
+   ```
+
+4. Wait for `Publish approved public-source game`. The unprivileged job must
+   build and test the fixed source SHA without production credentials. The
+   fresh protected job must verify the constrained handoff before any signing,
+   notarization, or immutable R2 publication. `stable.json` must be last.
+5. Prove production using the same cache-busted stable/immutable manifest,
+   real Web screen, immutable Mac download, and physical-device caveats defined
+   in the private runbook's **Prove production** section. Record the source SHA,
+   workflow run, version, and evidence in `/Users/greg/Projects/PROJECT_CATALOG.md`.
+
+Use `resume_existing=true` only after inspecting a partial failure for the same
+immutable identity and verifying every existing byte. Stop on any uncertainty
+about approval, repository identity, source SHA, version availability,
+protected workflow identity, signing/notarization, or live results.
