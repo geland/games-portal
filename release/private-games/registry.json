@@ -5,49 +5,76 @@
       "repository": "geland/butts",
       "config": "release/private-games/configs/butts.json",
       "bundleIdentifier": "com.gregeland.butts",
-      "profiles": ["web", "web+mac"]
+      "profiles": [
+        "web",
+        "web+mac"
+      ]
     },
     "lines-drawn": {
       "repository": "geland/lines-drawn",
       "config": "release/private-games/configs/lines-drawn.json",
       "bundleIdentifier": "com.gregeland.linesdrawn",
-      "profiles": ["web", "web+mac"]
+      "profiles": [
+        "web",
+        "web+mac"
+      ]
     },
     "blend-in": {
       "repository": "geland/blend-in",
       "config": "release/private-games/configs/blend-in.json",
       "bundleIdentifier": "com.gregeland.blendin",
-      "profiles": ["mac"]
+      "profiles": [
+        "mac"
+      ]
     },
     "commanders": {
       "repository": "geland/commanders",
       "config": "release/private-games/configs/commanders.json",
       "bundleIdentifier": "com.gregeland.commanders",
-      "profiles": ["web", "web+mac"]
+      "profiles": [
+        "web",
+        "web+mac"
+      ]
     },
     "web-dodge": {
       "repository": "geland/motion-games",
       "config": "release/private-games/configs/web-dodge.json",
       "bundleIdentifier": "com.gregeland.motiondodge",
-      "profiles": ["web"]
+      "profiles": [
+        "web"
+      ]
     },
     "motion-tracker": {
       "repository": "geland/motion-games",
       "config": "release/private-games/configs/motion-tracker.json",
       "bundleIdentifier": "com.gregeland.motiontracker",
-      "profiles": ["web"]
+      "profiles": [
+        "web"
+      ]
     },
     "balloon": {
       "repository": "geland/motion-games",
       "config": "release/private-games/configs/balloon.json",
       "bundleIdentifier": "com.gregeland.motionballoon",
-      "profiles": ["mac"]
+      "profiles": [
+        "mac"
+      ]
     },
     "labyrinth": {
       "repository": "geland/motion-games",
       "config": "release/private-games/configs/labyrinth.json",
       "bundleIdentifier": "com.gregeland.motionlabyrinth",
-      "profiles": ["mac"]
+      "profiles": [
+        "mac"
+      ]
+    },
+    "rising-to-ultima": {
+      "repository": "judaheland-dev/Rising-to-Ultima",
+      "config": "release/private-games/configs/rising-to-ultima.json",
+      "bundleIdentifier": "com.gregeland.risingtoultima",
+      "profiles": [
+        "mac"
+      ]
     }
   }
 }

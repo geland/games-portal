@@ -56,9 +56,18 @@ read, and metadata read for the allowlisted repositories. Contents read covers
 the approved tag and candidate prerelease assets. R2 and Apple credentials
 remain separate from all game source repositories.
 
+Rising to Ultima stays private on Judah’s account and uses the same exact-tag
+candidate contract. It is Mac-only: excavation requires background threads,
+which the default Web hosting path disables. It uses the separate protected
+`JUDAH_PRIVATE_ACTIONS_READ_TOKEN`, limited to Actions read, Contents read and
+metadata read for that repository. Existing `geland/*` sources continue using
+`PRIVATE_ACTIONS_READ_TOKEN`; there is no fallback between the two credentials.
+No production credential is placed in Judah’s repository.
+
 ## Operator runbook
 
-This is the canonical procedure for private `geland/*` game releases. Source
+This is the canonical procedure for the fixed private game repositories in
+`registry.json`, including Judah’s private Rising to Ultima. Source
 repositories may summarize their own validation gates and target profile, but
 must link here instead of maintaining a second publication procedure.
 
@@ -79,6 +88,7 @@ release. Approval to edit release automation is not approval to publish a game.
 | `motion-tracker` | `geland/motion-games` | `static-release-candidates.yml` | `web` |
 | `balloon` | `geland/motion-games` | `native-release-candidates.yml` | `mac` |
 | `labyrinth` | `geland/motion-games` | `native-release-candidates.yml` | `mac` |
+| `rising-to-ultima` | `judaheland-dev/Rising-to-Ultima` | `release.yml` | `mac` |
 
 The selected profile must be allowed by `registry.json` and match what the
 owner approved. Do not broaden a Mac-only or Web-only release while operating

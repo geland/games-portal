@@ -25,7 +25,7 @@ test("central public release is manual-only with a fixed choice", () => {
   assert.match(trigger, /workflow_dispatch:/);
   assert.doesNotMatch(trigger, /\bpush:|pull_request:|schedule:/);
   const choices = [...trigger.matchAll(/^          - (.+)$/gm)].map((match) => match[1]);
-  assert.deepEqual(choices, ["astro-bro", "racing-maze", "tower-defense", "rising-to-ultima"]);
+  assert.deepEqual(choices, ["astro-bro", "racing-maze", "tower-defense"]);
 });
 
 test("every third-party action is pinned to a full commit", () => {
@@ -120,13 +120,4 @@ test("catalog retains both enabled Astro Bro targets", () => {
 test("catalog links both enabled Tower Defense targets", () => {
   assert.match(catalog, /href="\/play\/tower-defense"/);
   assert.match(catalog, /href="\/download\/tower-defense\/mac"/);
-});
-
-test("Rising to Ultima validation stays in the unprivileged build job", () => {
-  const build = job("build-public-game", "sign-and-publish");
-  assert.match(build, /Validate Rising to Ultima launch and saves/);
-  assert.match(build, /game_id == 'rising-to-ultima'/);
-  assert.doesNotMatch(job("sign-and-publish"), /validate-rising-to-ultima/);
-  assert.match(catalog, /href="\/download\/rising-to-ultima\/mac"/);
-  assert.doesNotMatch(catalog, /href="\/play\/rising-to-ultima"/);
 });

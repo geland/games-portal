@@ -15,11 +15,6 @@
       "repository": "judaheland-dev/tower-defense",
       "config": "release/public-games/configs/tower-defense.json",
       "bundleIdentifier": "com.gregeland.towerdefense"
-    },
-    "rising-to-ultima": {
-      "repository": "judaheland-dev/Rising-to-Ultima",
-      "config": "release/public-games/configs/rising-to-ultima.json",
-      "bundleIdentifier": "com.gregeland.risingtoultima"
     }
   }
 }

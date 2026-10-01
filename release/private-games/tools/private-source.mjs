@@ -10,7 +10,8 @@ export const PRIVATE_REPOSITORIES = new Map([
   ["web-dodge", "geland/motion-games"],
   ["motion-tracker", "geland/motion-games"],
   ["balloon", "geland/motion-games"],
-  ["labyrinth", "geland/motion-games"]
+  ["labyrinth", "geland/motion-games"],
+  ["rising-to-ultima", "judaheland-dev/Rising-to-Ultima"]
 ]);
 
 export const PRIVATE_PROFILES = new Map([
@@ -21,7 +22,8 @@ export const PRIVATE_PROFILES = new Map([
   ["web-dodge", ["web"]],
   ["motion-tracker", ["web"]],
   ["balloon", ["mac"]],
-  ["labyrinth", ["mac"]]
+  ["labyrinth", ["mac"]],
+  ["rising-to-ultima", ["mac"]]
 ]);
 
 const PRIVATE_WORKFLOWS = new Map([
@@ -32,7 +34,8 @@ const PRIVATE_WORKFLOWS = new Map([
   ["web-dodge", { path: ".github/workflows/static-release-candidates.yml", name: null, packageStyle: "motion-static" }],
   ["motion-tracker", { path: ".github/workflows/static-release-candidates.yml", name: null, packageStyle: "motion-static" }],
   ["balloon", { path: ".github/workflows/native-release-candidates.yml", name: null, packageStyle: "motion-native" }],
-  ["labyrinth", { path: ".github/workflows/native-release-candidates.yml", name: null, packageStyle: "motion-native" }]
+  ["labyrinth", { path: ".github/workflows/native-release-candidates.yml", name: null, packageStyle: "motion-native" }],
+  ["rising-to-ultima", { path: ".github/workflows/release.yml", name: "Build game release candidate", packageStyle: "standard" }]
 ]);
 
 const PROFILE_TARGETS = new Map([
@@ -147,6 +150,7 @@ export async function resolvePrivateRelease({ registryFile, gameId, sourceSha, v
     repository: game.repository,
     configPath: game.config,
     configFile,
+    sourceReadTokenSecret: gameId === "rising-to-ultima" ? "JUDAH_PRIVATE_ACTIONS_READ_TOKEN" : "PRIVATE_ACTIONS_READ_TOKEN",
     sourceWorkflow: workflow.path,
     sourceWorkflowName,
     sourceSha,

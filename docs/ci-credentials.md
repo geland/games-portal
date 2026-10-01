@@ -40,6 +40,19 @@ workflow path, tag, and source SHA match the approved release, then downloads
 artifacts by immutable ID and verifies their server digest and constrained
 package contents without executing them.
 
+## Judah’s private Rising to Ultima
+
+`judaheland-dev/Rising-to-Ultima` uses exact-tag unsigned private candidates and
+the protected private publisher. Store `JUDAH_PRIVATE_ACTIONS_READ_TOKEN` only
+in `game-release-production`, scoped to this repository with Actions read,
+Contents read and metadata read. The trusted private registry selects its
+secret name; callers cannot provide a token name and no default token fallback
+is permitted. Existing `geland/*` credentials and access remain unchanged.
+
+The current default read-only token was verified to read Butts but return 404
+for Judah’s source and Actions endpoints in run `36804660647`. A token with
+this repository’s explicit access is required before publication.
+
 ## Judah's public repositories
 
 `judaheland-dev/astrobro`, `judaheland-dev/tower-defense`, and

@@ -12,7 +12,6 @@ on:
           - astro-bro
           - racing-maze
           - tower-defense
-          - rising-to-ultima
       source_sha:
         description: Exact lowercase 40-character commit SHA from the selected public repository
         required: true
@@ -231,10 +230,6 @@ jobs:
         if: needs.authorize.outputs.mac_enabled == 'true'
         run: bash "${RELEASE_SCRIPT_ROOT}/validate-project.sh"
 
-      - name: Validate Rising to Ultima launch and saves
-        if: needs.authorize.outputs.game_id == 'rising-to-ultima'
-        run: bash "${TRUSTED_ROOT}/release/public-games/tools/validate-rising-to-ultima.sh"
-
       - name: Build the unsigned universal Mac app
         if: needs.authorize.outputs.mac_enabled == 'true'
         env:
@@ -242,16 +237,6 @@ jobs:
           MAC_BUNDLE_NAME: ${{ needs.authorize.outputs.mac_bundle_name }}
           MAC_BUILD_DIR: ${{ runner.temp }}/gregeland-public-release/macos
         run: bash "${RELEASE_SCRIPT_ROOT}/build-macos.sh"
-
-      - name: Smoke-test the exported Rising to Ultima app
-        if: needs.authorize.outputs.game_id == 'rising-to-ultima'
-        env:
-          MAC_BUILD_DIR: ${{ runner.temp }}/gregeland-public-release/macos
-          MAC_BUNDLE_NAME: ${{ needs.authorize.outputs.mac_bundle_name }}
-        run: |
-          "${MAC_BUILD_DIR}/${MAC_BUNDLE_NAME}.app/Contents/MacOS/${MAC_BUNDLE_NAME}" --headless --max-fps 60 --quit-after 120 --log-file "${RUNNER_TEMP}/ultima-export.log" > "${RUNNER_TEMP}/ultima-export.output" 2>&1
-          cat "${RUNNER_TEMP}/ultima-export.output"
-          if grep -Eq '^ERROR:|SCRIPT ERROR:' "${RUNNER_TEMP}/ultima-export.output"; then exit 1; fi
 
       - name: Package the unsigned Mac app as data
         if: needs.authorize.outputs.mac_enabled == 'true'

@@ -25,17 +25,19 @@ jobs:
       - name: Check existing read-only token without exposing it
         env:
           GH_TOKEN: ${{ secrets.PRIVATE_ACTIONS_READ_TOKEN }}
+          JUDAH_TOKEN: ${{ secrets.JUDAH_PRIVATE_ACTIONS_READ_TOKEN }}
         run: |
           node --input-type=module <<'JS'
           const targets = [
-            ['existing private source', 'repos/geland/butts'],
-            ['Judah source', 'repos/judaheland-dev/Rising-to-Ultima'],
-            ['approved Judah commit', 'repos/judaheland-dev/Rising-to-Ultima/commits/7e8056ac722b7f1c8db5109c41584b718f64c9ab'],
-            ['Judah Actions metadata', 'repos/judaheland-dev/Rising-to-Ultima/actions/workflows']
+            ['existing private source', 'repos/geland/butts', process.env.GH_TOKEN],
+            ['Judah source', 'repos/judaheland-dev/Rising-to-Ultima', process.env.JUDAH_TOKEN],
+            ['approved Judah commit', 'repos/judaheland-dev/Rising-to-Ultima/commits/7e8056ac722b7f1c8db5109c41584b718f64c9ab', process.env.JUDAH_TOKEN],
+            ['Judah Actions metadata', 'repos/judaheland-dev/Rising-to-Ultima/actions/workflows', process.env.JUDAH_TOKEN]
           ];
           let failed = false;
-          for (const [label, endpoint] of targets) {
-            const response = await fetch(`https://api.github.com/${endpoint}`, {headers: {Authorization: `Bearer ${process.env.GH_TOKEN}`, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28'}});
+          for (const [label, endpoint, token] of targets) {
+            if (!token) { console.log(`${label}: read-only token not configured`); failed = true; continue; }
+            const response = await fetch(`https://api.github.com/${endpoint}`, {headers: {Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28'}});
             console.log(`${label}: HTTP ${response.status}`);
             if (!response.ok) failed = true;
             await response.arrayBuffer();
