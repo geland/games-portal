@@ -60,6 +60,11 @@ Tower Defense's source repository runs its placement regression during the
 unprivileged build, before any production credential is available. Racing
 Maze's selected baseline is present on its public remote.
 
+Rising to Ultima is configured for Mac only. Its public source has no export
+presets, so the trusted disposable stage supplies a universal macOS preset.
+Its digging system uses background threads; the current single-threaded Web
+hosting path must not be advertised as compatible.
+
 ## Required protected environment
 
 After the protected-`main` and main-only deployment-branch controls above are
@@ -109,7 +114,7 @@ Approval to edit release automation is not approval to publish a game.
    gh workflow run release-public-game.yml \
      --repo geland/games-portal \
      --ref main \
-     -f game=<astro-bro|racing-maze|tower-defense> \
+     -f game=<astro-bro|racing-maze|tower-defense|rising-to-ultima> \
      -f source_sha=<40-character-source-sha> \
      -f version=<version> \
      -f resume_existing=false
