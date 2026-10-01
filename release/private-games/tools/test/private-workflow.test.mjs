@@ -25,7 +25,7 @@ test("private publication is manual-only and repository choices are fixed", () =
   assert.doesNotMatch(trigger, /\bpush:|pull_request:|schedule:/);
   const gameInput = trigger.slice(trigger.indexOf("      game:\n"), trigger.indexOf("      source_sha:\n"));
   const choices = [...gameInput.matchAll(/^          - (.+)$/gm)].map((match) => match[1]);
-  assert.deepEqual(choices, ["butts", "lines-drawn", "blend-in", "commanders", "web-dodge", "motion-tracker", "balloon", "labyrinth", "rising-to-ultima"]);
+  assert.deepEqual(choices, ["butts", "lines-drawn", "blend-in", "commanders", "web-dodge", "motion-tracker", "balloon", "labyrinth", "rising-to-ultima", "last-man-standing"]);
   assert.doesNotMatch(trigger, /repository:/);
 });
 

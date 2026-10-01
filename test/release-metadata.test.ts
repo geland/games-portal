@@ -14,6 +14,21 @@ function manifest(version = "v1.5.0") {
 const url = "https://games.gregeland.com/api/releases/butts";
 
 describe("live catalog release metadata", () => {
+  it("serves Last Man Standing metadata and its Mac route", async () => {
+    const release = { slug: "last-man-standing", version: "v1.0.0", sourceCommit: sha,
+      sourceCommittedAt: "2026-10-01T01:39:48.000Z", publishedAt: "2026-10-01T02:00:00.000Z",
+      mac: { key: "downloads/last-man-standing/v1.0.0/last-man-standing-macos-universal.zip", filename: "last-man-standing-macos-universal.zip" },
+      files: [{ key: "downloads/last-man-standing/v1.0.0/last-man-standing-macos-universal.zip", size: 10,
+        sha256: "a".repeat(64), contentType: "application/zip" }] };
+    await env.GAME_RELEASES.put("manifests/last-man-standing/stable.json", JSON.stringify(release));
+    const response = await SELF.fetch("https://games.gregeland.com/api/releases/last-man-standing");
+    expect(response.status).toBe(200);
+    expect((await response.json() as {slug: string}).slug).toBe("last-man-standing");
+    const download = await SELF.fetch("https://games.gregeland.com/download/last-man-standing/mac", {redirect: "manual"});
+    expect(download.headers.get("location")).toBe("https://play.games.gregeland.com/downloads/last-man-standing/v1.0.0/last-man-standing-macos-universal.zip");
+    expect((await SELF.fetch("https://games.gregeland.com/play/last-man-standing")).status).toBe(404);
+  });
+
   it("includes the latest Commanders release made by the pre-timestamp publisher", async () => {
     const release = { ...manifest("v1.3.0"), slug: "commanders",
       sourceCommit: "0dcc1135713001c8a3bba41b460c4ed6e0a2b624",

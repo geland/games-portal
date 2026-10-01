@@ -88,6 +88,7 @@ release. Approval to edit release automation is not approval to publish a game.
 | `motion-tracker` | `geland/motion-games` | `static-release-candidates.yml` | `web` |
 | `balloon` | `geland/motion-games` | `native-release-candidates.yml` | `mac` |
 | `labyrinth` | `geland/motion-games` | `native-release-candidates.yml` | `mac` |
+| `last-man-standing` | `geland/caleb-fps-game` | `release.yml` | `mac` |
 | `rising-to-ultima` | `judaheland-dev/Rising-to-Ultima` | `release.yml` | `mac` |
 
 The selected profile must be allowed by `registry.json` and match what the

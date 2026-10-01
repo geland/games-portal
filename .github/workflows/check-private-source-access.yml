@@ -29,6 +29,8 @@ jobs:
         run: |
           node --input-type=module <<'JS'
           const targets = [
+            ['Caleb source', 'repos/geland/caleb-fps-game', process.env.GH_TOKEN],
+            ['Caleb Actions metadata', 'repos/geland/caleb-fps-game/actions/workflows', process.env.GH_TOKEN],
             ['existing private source', 'repos/geland/butts', process.env.GH_TOKEN],
             ['Judah source', 'repos/judaheland-dev/Rising-to-Ultima', process.env.JUDAH_TOKEN],
             ['approved Judah commit', 'repos/judaheland-dev/Rising-to-Ultima/commits/7e8056ac722b7f1c8db5109c41584b718f64c9ab', process.env.JUDAH_TOKEN],
