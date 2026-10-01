@@ -1,5 +1,8 @@
 # Last Man Standing v1.0.0
 
+Status: published September 30, 2026. The catalog card and signed/notarized
+universal Mac download are live. Source remains private.
+
 Requested 2026-09-30: publish Caleb's private `geland/caleb-fps-game` on
 `games.gregeland.com`, credited **By Caleb**. Initial preparation targets a
 signed/notarized universal Mac download; browser publication is disabled.
@@ -43,19 +46,48 @@ The local app exported for arm64 and x86_64, rendered menu/arena/split-screen,
 and passed packaged startup after the audio fix. Physical controller feel,
 extended gameplay and two-computer networking acceptance remain unverified.
 
-## Publication blocker
+## Release authorization and candidate
 
-Protected access check `36807010651` returned HTTP 404 for Caleb's repository
-and Actions metadata. Existing Geland source and Judah source returned HTTP 200.
-The token stored as `PRIVATE_ACTIONS_READ_TOKEN` in portal environment
-`game-release-production` needs the selected repository `geland/caleb-fps-game`,
-with Actions read, Contents read and Metadata read. Do not copy production
-credentials into the source repository or replace the protected publication path.
+The user authorized publication and the necessary read-only repository addition
+through shared Chrome. The existing Gregeland Games private release reader now
+includes the additional `geland/caleb-fps-game` repository; Actions, Contents
+and Metadata remain read-only, with existing repository selections and expiration
+unchanged. Protected access check `36810261775` passed all six HTTP 200 checks.
+No production credential was added to the source repository.
 
-No version tag, production portal deployment or stable promotion has been
-performed for this game. After the access update, rerun the protected check;
-then tag exact source `dca8a058baf1b0d6f7f8badd4e4df9460d303916` as the unused
-`v1.0.0`, verify its private Mac-only candidate, and use the canonical private
-publisher with profile `mac`. Deploy the portal from then-current protected
-`main` only after game publication, then verify the live catalog, manifest,
-signed archive and `/download/last-man-standing/mac` route.
+Annotated `v1.0.0` points to exact source
+`dca8a058baf1b0d6f7f8badd4e4df9460d303916`. Tag-triggered candidate run:
+`36810316824` passed (Mac only, event `push`, workflow `.github/workflows/release.yml`).
+The annotated tag object is `c36dfeb581a402ec5e105056b8f250ef21d7805b`.
+The private prerelease contains exactly one uploaded package and zero Actions
+artifacts: `last-man-standing-v1.0.0-mac.gpkg`, 231,051,922 bytes, SHA-256
+`f015bd261669a6a1ccbeb613da5b5fac358757486cb159b8938bc885fd750900`.
+
+Protected publisher `36810622471` passed from portal commit
+`639da9c3cd7817bfc0dee8309f9d94c906fe62d1`, profile `mac`, resume disabled.
+Developer ID signing, Apple notarization, stapling, final archive verification,
+immutable publication and stable-last promotion all passed.
+
+## Production proof
+
+- Manual catalog deployment `36810881868` passed, publishing portal commit
+  `639da9c3cd7817bfc0dee8309f9d94c906fe62d1` and verifying its production marker.
+- Live Chrome catalog shows Last Man Standing, By Caleb, v1.0.0, September 30
+  source date, the arena screenshot and only the Mac download action. No browser
+  warnings or errors were observed.
+- Public download: https://games.gregeland.com/download/last-man-standing/mac.
+- Stable reports exact source `dca8a058baf1b0d6f7f8badd4e4df9460d303916`.
+  The immutable archive is 107,481,864 bytes, SHA-256
+  `783e3d2f91f67f24cd0d9903767c02274739b51fafe7733ddfd19c40e4834904`.
+- The download route returns a no-store 302 to the immutable v1.0.0 archive.
+  Live metadata matches the released source/date and the deployed portal marker
+  matches the deployment commit. The archive responds with ZIP MIME, expected
+  size, immutable caching and HTTP 206 range support.
+- The protected macOS runner extracted the final archive, verified its signature
+  and stapled ticket, and passed Gatekeeper as `Notarized Developer ID` before
+  publication. A full independent local download stalled; its full-byte hash
+  and downloaded-app launch remain unverified. This does not replace physical
+  controller, extended gameplay or two-computer networking acceptance.
+- Evidence: `/private/tmp/caleb-live/catalog.jpg` and
+  `/private/tmp/caleb-live/verification.json`. Partial download files are not
+  playable releases.
