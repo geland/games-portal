@@ -1,0 +1,44 @@
+name: Check private source release access
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    environment: game-release-production
+    steps:
+      - name: Require protected main
+        env:
+          EVENT_REF: ${{ github.ref }}
+          WORKFLOW_REF: ${{ github.workflow_ref }}
+          EVENT_SHA: ${{ github.sha }}
+          WORKFLOW_SHA: ${{ github.workflow_sha }}
+        run: |
+          test "$EVENT_REF" = refs/heads/main
+          test "$WORKFLOW_REF" = geland/games-portal/.github/workflows/check-private-source-access.yml@refs/heads/main
+          test "$EVENT_SHA" = "$WORKFLOW_SHA"
+      - name: Check existing read-only token without exposing it
+        env:
+          GH_TOKEN: ${{ secrets.PRIVATE_ACTIONS_READ_TOKEN }}
+        run: |
+          node --input-type=module <<'JS'
+          const targets = [
+            ['existing private source', 'repos/geland/butts'],
+            ['Judah source', 'repos/judaheland-dev/Rising-to-Ultima'],
+            ['approved Judah commit', 'repos/judaheland-dev/Rising-to-Ultima/commits/7e8056ac722b7f1c8db5109c41584b718f64c9ab'],
+            ['Judah Actions metadata', 'repos/judaheland-dev/Rising-to-Ultima/actions/workflows']
+          ];
+          let failed = false;
+          for (const [label, endpoint] of targets) {
+            const response = await fetch(`https://api.github.com/${endpoint}`, {headers: {Authorization: `Bearer ${process.env.GH_TOKEN}`, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28'}});
+            console.log(`${label}: HTTP ${response.status}`);
+            if (!response.ok) failed = true;
+            await response.arrayBuffer();
+          }
+          if (failed) process.exit(1);
+          JS
