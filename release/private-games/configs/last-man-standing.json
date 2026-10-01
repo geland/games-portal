@@ -1,0 +1,16 @@
+{
+  "slug": "last-man-standing",
+  "projectPath": ".",
+  "godotVersion": "4.6.2",
+  "web": {
+    "enabled": false,
+    "preset": "Web",
+    "entry": "index.html"
+  },
+  "mac": {
+    "enabled": true,
+    "preset": "macOS",
+    "bundleName": "Last Man Standing",
+    "entitlements": null
+  }
+}

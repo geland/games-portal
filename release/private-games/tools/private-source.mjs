@@ -11,7 +11,8 @@ export const PRIVATE_REPOSITORIES = new Map([
   ["motion-tracker", "geland/motion-games"],
   ["balloon", "geland/motion-games"],
   ["labyrinth", "geland/motion-games"],
-  ["rising-to-ultima", "judaheland-dev/Rising-to-Ultima"]
+  ["rising-to-ultima", "judaheland-dev/Rising-to-Ultima"],
+  ["last-man-standing", "geland/caleb-fps-game"]
 ]);
 
 export const PRIVATE_PROFILES = new Map([
@@ -23,7 +24,8 @@ export const PRIVATE_PROFILES = new Map([
   ["motion-tracker", ["web"]],
   ["balloon", ["mac"]],
   ["labyrinth", ["mac"]],
-  ["rising-to-ultima", ["mac"]]
+  ["rising-to-ultima", ["mac"]],
+  ["last-man-standing", ["mac"]]
 ]);
 
 const PRIVATE_WORKFLOWS = new Map([
@@ -35,6 +37,7 @@ const PRIVATE_WORKFLOWS = new Map([
   ["motion-tracker", { path: ".github/workflows/static-release-candidates.yml", name: null, packageStyle: "motion-static" }],
   ["balloon", { path: ".github/workflows/native-release-candidates.yml", name: null, packageStyle: "motion-native" }],
   ["labyrinth", { path: ".github/workflows/native-release-candidates.yml", name: null, packageStyle: "motion-native" }],
+  ["last-man-standing", { path: ".github/workflows/release.yml", name: "Build game release candidate", packageStyle: "standard" }],
   ["rising-to-ultima", { path: ".github/workflows/release.yml", name: "Build game release candidate", packageStyle: "standard" }]
 ]);
 

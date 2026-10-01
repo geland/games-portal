@@ -199,3 +199,17 @@ test("Rising to Ultima uses private exact-tag Mac candidates and a separate read
   assert.deepEqual(release.candidateAssetNames,["rising-to-ultima-v1.0.0-mac.gpkg"]);
   await assert.rejects(resolvePrivateRelease({...options,profile:"web+mac"}),/not approved/);
 });
+
+
+test("Last Man Standing resolves only its private Mac candidate", async () => {
+  const options = {registryFile, gameId:"last-man-standing", sourceSha:sha, version:"v1.0.0", profile:"mac", buildRunId:"32920663103", resume:"false"};
+  const release = await resolvePrivateRelease(options);
+  assert.equal(release.repository,"geland/caleb-fps-game");
+  assert.equal(release.sourceReadTokenSecret,"PRIVATE_ACTIONS_READ_TOKEN");
+  assert.equal(release.bundleIdentifier,"com.gregeland.lastmanstanding");
+  assert.equal(release.macBundleName,"Last Man Standing");
+  assert.equal(release.webEnabled,false);
+  assert.equal(release.macEnabled,true);
+  assert.deepEqual(release.candidateAssetNames,["last-man-standing-v1.0.0-mac.gpkg"]);
+  await assert.rejects(resolvePrivateRelease({...options,profile:"web+mac"}),/not approved/);
+});

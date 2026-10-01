@@ -1,6 +1,6 @@
 export const MANAGED_GAME_SLUGS = new Set([
   "astro-bro", "butts", "lines-drawn", "commanders", "tower-defense", "racing-maze",
-  "rising-to-ultima", "blend-in", "web-dodge", "motion-tracker", "balloon", "labyrinth"
+  "rising-to-ultima", "last-man-standing", "blend-in", "web-dodge", "motion-tracker", "balloon", "labyrinth"
 ]);
 
 // Older immutable manifests predate sourceCommittedAt. These exact commits were

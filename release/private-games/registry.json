@@ -75,6 +75,14 @@
       "profiles": [
         "mac"
       ]
+    },
+    "last-man-standing": {
+      "repository": "geland/caleb-fps-game",
+      "config": "release/private-games/configs/last-man-standing.json",
+      "bundleIdentifier": "com.gregeland.lastmanstanding",
+      "profiles": [
+        "mac"
+      ]
     }
   }
 }
