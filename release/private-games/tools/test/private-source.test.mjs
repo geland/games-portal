@@ -21,6 +21,7 @@ test("private releases resolve only fixed repositories and profiles", async () =
     resume: "false"
   });
   assert.equal(release.repository, "geland/butts");
+  assert.equal(release.sourceReadTokenSecret, "PRIVATE_ACTIONS_READ_TOKEN");
   assert.equal(release.webEnabled, true);
   assert.equal(release.macEnabled, false);
   assert.equal(release.candidateMacEnabled, true);
@@ -183,4 +184,18 @@ test("effective configuration freezes the selected target profile", async () => 
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
+});
+
+test("Rising to Ultima uses private exact-tag Mac candidates and a separate read-only token", async () => {
+  const options = {registryFile, gameId:"rising-to-ultima", sourceSha:sha, version:"v1.0.0", profile:"mac", buildRunId:"32920663103", resume:"false"};
+  const release = await resolvePrivateRelease(options);
+  assert.equal(release.repository,"judaheland-dev/Rising-to-Ultima");
+  assert.equal(release.sourceReadTokenSecret,"JUDAH_PRIVATE_ACTIONS_READ_TOKEN");
+  assert.equal(release.bundleIdentifier,"com.gregeland.risingtoultima");
+  assert.equal(release.sourceWorkflow,".github/workflows/release.yml");
+  assert.equal(release.sourceWorkflowName,"Build game release candidate");
+  assert.equal(release.webEnabled,false);
+  assert.equal(release.macEnabled,true);
+  assert.deepEqual(release.candidateAssetNames,["rising-to-ultima-v1.0.0-mac.gpkg"]);
+  await assert.rejects(resolvePrivateRelease({...options,profile:"web+mac"}),/not approved/);
 });

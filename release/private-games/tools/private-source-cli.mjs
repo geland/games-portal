@@ -19,6 +19,7 @@ if (command === "resolve") {
   const values = {
     game_id: release.gameId,
     source_repository: release.repository,
+    source_read_token_secret: release.sourceReadTokenSecret,
     source_workflow: release.sourceWorkflow,
     source_workflow_name: release.sourceWorkflowName,
     source_sha: release.sourceSha,

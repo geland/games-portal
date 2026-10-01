@@ -17,6 +17,7 @@ on:
           - motion-tracker
           - balloon
           - labyrinth
+          - rising-to-ultima
       source_sha:
         description: Exact lowercase 40-character source commit SHA
         required: true
@@ -58,6 +59,7 @@ jobs:
     outputs:
       game_id: ${{ steps.release.outputs.game_id }}
       source_repository: ${{ steps.release.outputs.source_repository }}
+      source_read_token_secret: ${{ steps.release.outputs.source_read_token_secret }}
       source_workflow: ${{ steps.release.outputs.source_workflow }}
       source_workflow_name: ${{ steps.release.outputs.source_workflow_name }}
       source_sha: ${{ steps.release.outputs.source_sha }}
@@ -202,7 +204,7 @@ jobs:
           WEB_ASSET_NAME: ${{ needs.authorize.outputs.web_asset_name }}
           MAC_ASSET_NAME: ${{ needs.authorize.outputs.mac_asset_name }}
           CANDIDATE_ASSET_NAMES_JSON: ${{ needs.authorize.outputs.candidate_asset_names_json }}
-          PRIVATE_ACTIONS_READ_TOKEN: ${{ secrets.PRIVATE_ACTIONS_READ_TOKEN }}
+          PRIVATE_ACTIONS_READ_TOKEN: ${{ secrets[needs.authorize.outputs.source_read_token_secret] }}
         run: node "${PRIVATE_TOOL_ROOT}/private-run-cli.mjs" verify
 
       - name: Download and verify the exact Web release asset
@@ -212,7 +214,7 @@ jobs:
           RELEASE_ASSET_ID: ${{ steps.candidate.outputs.web_asset_id }}
           RELEASE_ASSET_DIGEST: ${{ steps.candidate.outputs.web_asset_digest }}
           RELEASE_ASSET_OUTPUT: ${{ runner.temp }}/gregeland-private-download/web/${{ needs.authorize.outputs.web_package_filename }}
-          PRIVATE_ACTIONS_READ_TOKEN: ${{ secrets.PRIVATE_ACTIONS_READ_TOKEN }}
+          PRIVATE_ACTIONS_READ_TOKEN: ${{ secrets[needs.authorize.outputs.source_read_token_secret] }}
         run: node "${PRIVATE_TOOL_ROOT}/download-release-asset.mjs"
 
       - name: Verify and unpack Web data without executing it
@@ -234,7 +236,7 @@ jobs:
           RELEASE_ASSET_ID: ${{ steps.candidate.outputs.mac_asset_id }}
           RELEASE_ASSET_DIGEST: ${{ steps.candidate.outputs.mac_asset_digest }}
           RELEASE_ASSET_OUTPUT: ${{ runner.temp }}/gregeland-private-download/mac/${{ needs.authorize.outputs.mac_package_filename }}
-          PRIVATE_ACTIONS_READ_TOKEN: ${{ secrets.PRIVATE_ACTIONS_READ_TOKEN }}
+          PRIVATE_ACTIONS_READ_TOKEN: ${{ secrets[needs.authorize.outputs.source_read_token_secret] }}
         run: node "${PRIVATE_TOOL_ROOT}/download-release-asset.mjs"
 
       - name: Verify and unpack the unsigned Mac app without executing it
@@ -278,7 +280,7 @@ jobs:
         env:
           SOURCE_REPOSITORY: ${{ needs.authorize.outputs.source_repository }}
           SOURCE_COMMIT: ${{ needs.authorize.outputs.source_sha }}
-          SOURCE_READ_TOKEN: ${{ secrets.PRIVATE_ACTIONS_READ_TOKEN }}
+          SOURCE_READ_TOKEN: ${{ secrets[needs.authorize.outputs.source_read_token_secret] }}
         run: node "${RELEASE_TOOL_ROOT}/source-commit.mjs"
 
       - name: Publish immutable objects and promote stable last
