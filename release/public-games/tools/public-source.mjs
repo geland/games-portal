@@ -1,11 +1,12 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { readFile, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { isSafeRelativePath, loadConfig, setPresetOption, SHA_RE, VERSION_RE } from "../../../templates/game-repo/.github/release-tools/lib.mjs";
 
 export const PUBLIC_REPOSITORIES = new Map([
   ["astro-bro", "judaheland-dev/astrobro"],
   ["racing-maze", "judaheland-dev/race-maze"],
-  ["tower-defense", "judaheland-dev/tower-defense"]
+  ["tower-defense", "judaheland-dev/tower-defense"],
+  ["rising-to-ultima", "judaheland-dev/Rising-to-Ultima"]
 ]);
 
 const REPOSITORY_RE = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
@@ -106,7 +107,14 @@ export async function preparePublicStage({ registryFile, gameId, target, project
     await writeFile(projectFile, projectText);
     await writeFile(presetFile, renderTrustedWebPreset(resolved.webPreset));
   } else {
-    let presets = await readFile(presetFile, "utf8");
+    if (gameId === "rising-to-ultima") {
+      await keepRawAudio(path.join(projectRoot, "audio"));
+      const projectText = await readFile(projectFile, "utf8");
+      await writeFile(projectFile, setProjectSetting(projectText, "rendering", "textures/vram_compression/import_etc2_astc", "true"));
+    }
+    let presets = gameId === "rising-to-ultima"
+      ? renderTrustedMacPreset(resolved.macPreset, resolved.macBundleName)
+      : await readFile(presetFile, "utf8");
     presets = setPresetOption(presets, resolved.macPreset, "macOS", "application/bundle_identifier", JSON.stringify(resolved.bundleIdentifier));
     const shortVersion = version.slice(1);
     presets = setPresetOption(presets, resolved.macPreset, "macOS", "application/short_version", JSON.stringify(shortVersion));
@@ -189,4 +197,44 @@ progressive_web_app/icon_512x512=""
 progressive_web_app/background_color=Color(0, 0, 0, 1)
 dotnet/include_scripts_content=false
 `;
+}
+
+// Rising to Ultima has no committed presets. Supply only export configuration
+// in the disposable stage; retain the exact public source and gameplay scripts.
+export function renderTrustedMacPreset(name, bundleName) {
+  return `[preset.0]
+
+name=${JSON.stringify(name)}
+platform="macOS"
+runnable=true
+export_filter="all_resources"
+include_filter="audio/**/*.mp3,audio/**/*.wav"
+exclude_filter=".godot/**,**/.DS_Store,tests/**,tools/**,reviews/**,*-preview.png,AGENTS.md,AUDIT_REPORT.md,README.md,RESOURCE_REQUIREMENTS.md,scenes/Landscape.next.scn"
+export_path=""
+script_export_mode=2
+
+[preset.0.options]
+
+export/distribution_type=1
+binary_format/architecture="universal"
+application/name=${JSON.stringify(bundleName)}
+application/bundle_identifier="com.gregeland.risingtoultima"
+application/short_version=""
+application/version=""
+codesign/codesign=0
+notarization/notarization=0
+`;
+}
+
+async function keepRawAudio(directory, relative = "audio") {
+  for (const entry of await readdir(directory, { withFileTypes: true })) {
+    const filename = path.join(directory, entry.name);
+    const resource = `${relative}/${entry.name}`;
+    if (entry.isDirectory()) await keepRawAudio(filename, resource);
+    else if (/\.(mp3|wav)$/.test(entry.name) && !["audio/opening.wav", "audio/chamber_rumble.wav"].includes(resource)) {
+      // These sounds use AudioStream*.load_from_file(), which needs original
+      // bytes rather than Godot's imported-resource remapping in an export.
+      await writeFile(`${filename}.import`, `[remap]\n\nimporter="keep"\n\n[deps]\n\nsource_file=${JSON.stringify(`res://${resource}`)}\n`);
+    }
+  }
 }

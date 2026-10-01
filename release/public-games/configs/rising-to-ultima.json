@@ -1,0 +1,16 @@
+{
+  "slug": "rising-to-ultima",
+  "projectPath": ".",
+  "godotVersion": "4.6.2",
+  "web": {
+    "enabled": false,
+    "preset": "Gregeland Web",
+    "entry": "index.html"
+  },
+  "mac": {
+    "enabled": true,
+    "preset": "macOS",
+    "bundleName": "Rising to Ultima",
+    "entitlements": null
+  }
+}

@@ -13,7 +13,8 @@ test("public releases use the exact currently releasable repository allowlist", 
   assert.deepEqual([...PUBLIC_REPOSITORIES], [
     ["astro-bro", "judaheland-dev/astrobro"],
     ["racing-maze", "judaheland-dev/race-maze"],
-    ["tower-defense", "judaheland-dev/tower-defense"]
+    ["tower-defense", "judaheland-dev/tower-defense"],
+    ["rising-to-ultima", "judaheland-dev/Rising-to-Ultima"]
   ]);
   const release = await resolvePublicRelease({
     registryFile,
@@ -111,4 +112,25 @@ test("trusted Astro Bro Mac staging uses its committed macOS preset identity", a
   assert.match(presets, /application\/bundle_identifier="com.gregeland.astrobro"/);
   assert.match(presets, /application\/short_version="1.0.0"/);
   assert.match(presets, /application\/version="1.0.0"/);
+});
+
+test("Rising to Ultima stages a universal Mac preset without source presets", async () => {
+  const project = await mkdtemp(path.join(os.tmpdir(), "gregeland-ultima-stage-"));
+  const source = `[application]\nconfig/name="Rising to Ultima"\n`;
+  await mkdir(path.join(project, "audio/ui"), {recursive:true});
+  await writeFile(path.join(project, "audio/ui/menu_click.mp3"), "fixture");
+  await writeFile(path.join(project, "project.godot"), source);
+  const release = await preparePublicStage({ registryFile, gameId: "rising-to-ultima", target: "mac", projectDirectory: project, version: "v1.0.0" });
+  assert.equal(release.repository, "judaheland-dev/Rising-to-Ultima");
+  assert.equal(release.webEnabled, false);
+  assert.equal(release.macEnabled, true);
+  const preset = await readFile(path.join(project, "export_presets.cfg"), "utf8");
+  assert.match(await readFile(path.join(project, "audio/ui/menu_click.mp3.import"), "utf8"), /importer="keep"/);
+  assert.match(preset, /binary_format\/architecture="universal"/);
+  assert.match(preset, /application\/bundle_identifier="com.gregeland.risingtoultima"/);
+  assert.match(preset, /application\/version="1.0.0"/);
+  const stagedProject = await readFile(path.join(project, "project.godot"), "utf8");
+  assert.ok(stagedProject.startsWith(source));
+  assert.match(stagedProject, /textures\/vram_compression\/import_etc2_astc=true/);
+  await assert.rejects(preparePublicStage({ registryFile, gameId: "rising-to-ultima", target: "web", projectDirectory: project, version: "v1.0.0" }), /Web is not enabled/);
 });
