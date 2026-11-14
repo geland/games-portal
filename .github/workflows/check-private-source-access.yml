@@ -29,6 +29,8 @@ jobs:
         run: |
           node --input-type=module <<'JS'
           const targets = [
+            ['Jane source', 'repos/geland/dragons-and-vikings', process.env.GH_TOKEN],
+            ['Jane Actions metadata', 'repos/geland/dragons-and-vikings/actions/workflows', process.env.GH_TOKEN],
             ['Caleb source', 'repos/geland/caleb-fps-game', process.env.GH_TOKEN],
             ['Caleb Actions metadata', 'repos/geland/caleb-fps-game/actions/workflows', process.env.GH_TOKEN],
             ['existing private source', 'repos/geland/butts', process.env.GH_TOKEN],

@@ -3,6 +3,7 @@ import path from "node:path";
 import { isSafeRelativePath, loadConfig, SHA_RE, VERSION_RE } from "../../../templates/game-repo/.github/release-tools/lib.mjs";
 
 export const PRIVATE_REPOSITORIES = new Map([
+  ["dragons-and-vikings", "geland/dragons-and-vikings"],
   ["butts", "geland/butts"],
   ["lines-drawn", "geland/lines-drawn"],
   ["blend-in", "geland/blend-in"],
@@ -16,6 +17,7 @@ export const PRIVATE_REPOSITORIES = new Map([
 ]);
 
 export const PRIVATE_PROFILES = new Map([
+  ["dragons-and-vikings", ["web"]],
   ["butts", ["web", "web+mac"]],
   ["lines-drawn", ["web", "web+mac"]],
   ["blend-in", ["mac"]],
@@ -29,6 +31,7 @@ export const PRIVATE_PROFILES = new Map([
 ]);
 
 const PRIVATE_WORKFLOWS = new Map([
+  ["dragons-and-vikings", { path: ".github/workflows/release.yml", name: "Build game release candidate", packageStyle: "standard" }],
   ["butts", { path: ".github/workflows/release.yml", name: "Build game release candidate", packageStyle: "standard" }],
   ["lines-drawn", { path: ".github/workflows/release.yml", name: "Build game release candidate", packageStyle: "standard" }],
   ["blend-in", { path: ".github/workflows/release.yml", name: "Build game release candidate", packageStyle: "standard" }],

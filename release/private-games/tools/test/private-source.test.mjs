@@ -10,6 +10,22 @@ const toolRoot = path.dirname(fileURLToPath(import.meta.url));
 const registryFile = path.resolve(toolRoot, "../../registry.json");
 const sha = "a".repeat(40);
 
+test("Jane's game permits only its single Web candidate and refuses native profiles", async () => {
+  const options = { registryFile, gameId: "dragons-and-vikings", sourceSha: sha,
+    version: "v1.0.0", profile: "web", buildRunId: "32920663105", resume: "false" };
+  const release = await resolvePrivateRelease(options);
+  assert.equal(release.repository, "geland/dragons-and-vikings");
+  assert.equal(release.sourceReadTokenSecret, "PRIVATE_ACTIONS_READ_TOKEN");
+  assert.equal(release.sourceWorkflowName, "Build game release candidate");
+  assert.equal(release.webEnabled, true);
+  assert.equal(release.macEnabled, false);
+  assert.equal(release.candidateMacEnabled, false);
+  assert.deepEqual(release.candidateAssetNames, ["dragons-and-vikings-v1.0.0-web.gpkg"]);
+  for (const profile of ["mac", "web+mac"]) {
+    await assert.rejects(resolvePrivateRelease({ ...options, profile }), /not approved/);
+  }
+});
+
 test("private releases resolve only fixed repositories and profiles", async () => {
   const release = await resolvePrivateRelease({
     registryFile,

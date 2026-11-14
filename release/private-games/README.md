@@ -41,6 +41,12 @@ Lines Drawn uses the standard Web+Mac candidate contract from
 `geland/lines-drawn`. Its approved bundle identity is
 `com.gregeland.linesdrawn`.
 
+Dragons VS. Vikings, created by Jane, uses the standard candidate contract with
+only Web enabled. Its Godot project lives in `In Berk/`; the initial target is
+computers with a keyboard. Mac and Windows downloads are deferred. The existing
+`PRIVATE_ACTIONS_READ_TOKEN` must have repository-only Actions, Contents and
+metadata read access to `geland/dragons-and-vikings` before publication.
+
 A manually dispatched candidate is useful for validation but is deliberately
 ineligible for publication and creates no release assets. Publishable candidates
 must come from an exact `vMAJOR.MINOR.PATCH` tag so GitHub independently records
@@ -80,6 +86,7 @@ release. Approval to edit release automation is not approval to publish a game.
 
 | Game input | Source repository | Candidate workflow | Profile |
 |---|---|---|---|
+| `dragons-and-vikings` | `geland/dragons-and-vikings` | `release.yml` | `web` |
 | `butts` | `geland/butts` | `release.yml` | `web` or `web+mac` |
 | `lines-drawn` | `geland/lines-drawn` | `release.yml` | `web` or `web+mac` |
 | `blend-in` | `geland/blend-in` | `release.yml` | `mac` |
