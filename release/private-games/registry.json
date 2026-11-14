@@ -83,6 +83,14 @@
       "profiles": [
         "mac"
       ]
+    },
+    "dragons-and-vikings": {
+      "repository": "geland/dragons-and-vikings",
+      "config": "release/private-games/configs/dragons-and-vikings.json",
+      "bundleIdentifier": "com.gregeland.dragonsandvikings",
+      "profiles": [
+        "web"
+      ]
     }
   }
 }
